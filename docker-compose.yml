@@ -25,7 +25,7 @@ services:
     user: root
     environment:
       - POSTGRES_USER=odoo_client
-      - POSTGRES_PASSWORD=passwd-client
+      - POSTGRES_PASSWORD=changemeoryouilldie
       - POSTGRES_DB=postgres
       - PGDATA=/var/lib/postgresql/data/pgdata
     restart: always             # run as a service
@@ -45,7 +45,7 @@ services:
     environment:
       - HOST=db
       - USER=odoo_client
-      - PASSWORD=password_client
+      - PASSWORD=changemeoryouilldie
     volumes:
       #- /etc/timezone:/etc/timezone:ro
       #- /etc/localtime:/etc/localtime:ro
