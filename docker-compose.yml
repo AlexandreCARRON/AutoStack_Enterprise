@@ -13,8 +13,10 @@ services:
 
   portainer:
     image: portainer/portainer-ce:latest
+    container_name: portainer
+    command: -H unix:///var/run/docker.sock
     ports:
-      - 42090:9443
+      - 42090:9000
       volumes:
         - ./volumes/Portainer/data:/data
         - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
