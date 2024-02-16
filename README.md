@@ -9,5 +9,5 @@ Commande à executer :
 
 
 Gestion des mots de passe : 
-/!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf !!! /!\
+/!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf ET dans le entrypoint.sh (s'il est utilisé) !!! /!\
 
