@@ -7,3 +7,7 @@ Commande à executer :
 
 <code> sudo docker-compose up -d </code>
 
+
+Gestion des mots de passe : 
+/!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf !!! /!\
+
