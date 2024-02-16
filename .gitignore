@@ -1,0 +1,7 @@
+.docker
+.vscode
+node_modules/
+certs/
+conf.d/
+data/
+vhost.d/
