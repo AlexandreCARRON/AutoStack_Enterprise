@@ -12,7 +12,7 @@ services:
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
 
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:alpine
     container_name: portainer
     command: -H unix:///var/run/docker.sock
     ports:
