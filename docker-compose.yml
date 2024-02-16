@@ -11,6 +11,15 @@ services:
       - ./volumes/Nginx-proxy-manager/data:/data
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+      - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
+    ports:
+      - 42031:3001  # <Host Port>:<Container Port>
+    restart: always
+
   db:
     image: postgres:16
     user: root
