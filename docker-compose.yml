@@ -17,9 +17,9 @@ services:
     command: -H unix:///var/run/docker.sock
     ports:
       - "42090:9443"
- #     volumes:
- #       - ./volumes/Portainer/data:/data
- #       - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
+    volumes:
+      - ./volumes/Portainer/data:/data
+      - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
   uptime-kuma:
