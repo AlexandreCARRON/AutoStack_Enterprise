@@ -2,7 +2,6 @@ version: '3.1'
 services:
   nginx-proxy-manager:  #principal intérêt rediriger vers un port exautique + automatiser demande certificat pour https
     image: 'jc21/nginx-proxy-manager:latest'
-    restart: unless-stopped
     ports:
       - '80:80'
       - '42081:81' # port pour tapper l'interface de management
@@ -10,13 +9,27 @@ services:
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+      
+  jenkins:
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - '42080:8080' # port pour tapper l'interface de management
+      - '42005:50000'
+    container_name: jenkins
+    volumes:
+      - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
+      - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
 
   portainer:
-    image: portainer/portainer-ce:alpine
+    image: portainer/portainer-ce:latest
     container_name: portainer
-#    command: -H unix:///var/run/docker.sock
+#    command: -H unix:///var/run/docker.sock  #ne connais pas encore l'utilité de cette commande donc à voir pourquoi décommenter
     ports:
-      - "42090:9443"
+      - "42090:9443" # port pour tapper l'interface de management
     volumes:
       - ./volumes/Portainer/data:/data
       - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
@@ -49,7 +62,7 @@ services:
     depends_on:
       - db
     ports:
-      - "42017:8069"
+      - "42017:8069" # port pour tapper l'interface de management
       - "42018:8072" # live chat
     tty: true
     command: --
@@ -65,6 +78,8 @@ services:
       - ./volumes/Odoo/addons:/mnt/extra-addons
       - ./volumes/Odoo/etc:/etc/odoo
     restart: always             # run as a service
+
+    # liste ci dessous en attente d'automatisation de la conf sans passer par nginx-proxy-manager
 
     #  nginx:
 #    restart: always
