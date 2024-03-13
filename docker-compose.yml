@@ -8,6 +8,7 @@ services:
       - '443:443'
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
+      - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
     restart: unless-stopped
       
