@@ -4,7 +4,7 @@ services:
     image: 'jc21/nginx-proxy-manager:latest'
     ports:
       - '80:80'
-      - '22081:81' # port pour tapper l'interface de management
+      - '42081:81' # port pour tapper l'interface de management
       - '443:443'
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
@@ -17,8 +17,8 @@ services:
     privileged: true
     user: root
     ports:
-      - '22080:8080' # port pour tapper l'interface de management
-      - '22005:50000'
+      - '42080:8080' # port pour tapper l'interface de management
+      - '42005:50000'
     container_name: jenkins
     volumes:
       - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
@@ -28,9 +28,9 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
-#    command: -H unix:///var/run/docker.sock  #ne connais pas encore l'utilité de cette commande donc à voir pourquoi décommenter
+    command: -H unix:///var/run/docker.sock  #obligatoire pour lier portainer à docker en local sur la machine
     ports:
-      - "22090:9443" # port pour tapper l'interface de management
+      - "42090:9443" # port pour tapper l'interface de management
     volumes:
       - ./volumes/Portainer/data:/data
       - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
@@ -42,7 +42,7 @@ services:
     volumes:
       - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
     ports:
-      - 22031:3001  # <Host Port>:<Container Port>
+      - 42031:3001  # <Host Port>:<Container Port>
     restart: unless-stopped
 
   db:
@@ -63,8 +63,8 @@ services:
     depends_on:
       - db
     ports:
-      - "22017:8069" # port pour tapper l'interface de management
-      - "22018:8072" # live chat
+      - "42017:8069" # port pour tapper l'interface de management
+      - "42018:8072" # live chat
     tty: true
     command: --
     environment:
