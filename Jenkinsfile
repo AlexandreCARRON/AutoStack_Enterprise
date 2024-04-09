@@ -14,6 +14,12 @@ pipeline {
                 echo 'Partie Test'
             }
         }
+// Stage de phase de Versionning       
+                stage('PACKAGE') {
+            steps {
+                echo 'Partie Realese'
+            }
+        }
 // Stage de phase de mise en production        
                 stage('DEPLOY') {
             steps {
