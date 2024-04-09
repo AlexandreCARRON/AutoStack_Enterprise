@@ -9,6 +9,8 @@ pipeline {
 //                sh '''
 //                cd myapp
 //                pip install -r requirements.txt
+//                cd
+//                sudo docker build -t mybestapp:${BUILD_NUMBER} 
 //                '''
             }
         }
