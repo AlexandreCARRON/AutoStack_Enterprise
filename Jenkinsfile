@@ -6,6 +6,8 @@ pipeline {
         stage('BUILD') { 
             steps {
                 echo ' Phase de Dev'
+                echo "Le numéro de version de ce Job est ${BUILD_ID}"
+                echo "L'URL de cette version est ${BUILD_URL}"
 //                sh '''
 //                cd myapp
 //                pip install -r requirements.txt
