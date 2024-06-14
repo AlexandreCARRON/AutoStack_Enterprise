@@ -80,8 +80,17 @@ services:
       - ./volumes/Odoo/etc:/etc/odoo
     restart: always             # run as a service
 
-    # liste ci dessous en attente d'automatisation de la conf sans passer par nginx-proxy-manager
+      web-check:
+    container_name: Web-Check
+    image: lissy93/web-check
+    ports:
+      - 22003:3000
+    restart: unless-stopped
 
+    # *********************************************************liste ci dessous en attente ***********************************
+
+
+# ***********************automatisation de la conf sans passer par nginx-proxy-manager
     #  nginx:
 #    restart: always
 #    image: nginx
@@ -121,3 +130,7 @@ services:
 
 
 # autre solution de monitoring + secu : wazuh 
+
+# ************************* WAF
+#
+#Gros boulot en perspective, et limitations à examiner : https://github.com/coreruleset/modsecurity-crs-docker/blob/main/docker-compose.yaml
