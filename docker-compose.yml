@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.9'
 services:
   nginx-proxy-manager:  #principal intérêt rediriger vers un port exautique + automatiser demande certificat pour https
     image: 'jc21/nginx-proxy-manager:latest'
