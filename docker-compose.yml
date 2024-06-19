@@ -41,6 +41,7 @@ services:
     restart: always             # run as a service
     volumes:
         - ./volumes/postgresql/data:/var/lib/postgresql/data
+  
   odoo17:
     image: odoo:17
     user: root
