@@ -1,6 +1,9 @@
 version: '3.9'
 services:
-  nginx-proxy-manager:  #principal intérêt rediriger vers un port exautique + automatiser demande certificat pour https
+
+    #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
+
+  nginx-proxy-manager:  #principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
     image: 'jc21/nginx-proxy-manager:latest'
     ports:
       - '80:80'
@@ -11,21 +14,10 @@ services:
       - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
     restart: unless-stopped
-      
-  jenkins:
-    image: jenkins/jenkins:lts
-    privileged: true
-    user: root
-    ports:
-      - '22080:8080' # port pour tapper l'interface de management
-      - '22005:50000'
-    container_name: jenkins
-    volumes:
-      - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
-      - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
-
-  portainer:
+    
+    #******************************** PORTAINER ****************************************************************************************************
+    
+  portainer:                            #Permet de visualiser et gérer vos container et volumes via une interface web simplifiée
     image: portainer/portainer-ce:latest
     container_name: portainer
     command: -H unix:///var/run/docker.sock  #obligatoire pour lier portainer à docker en local sur la machine
@@ -36,14 +28,7 @@ services:
       - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: uptime-kuma
-    volumes:
-      - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
-    ports:
-      - "22031:3001"  # <Host Port>:<Container Port>
-    restart: unless-stopped
+    #******************************** ODOO ****************************************************************************************************
 
   db:
     image: postgres:16
@@ -80,17 +65,90 @@ services:
       - ./volumes/Odoo/etc:/etc/odoo
     restart: always             # run as a service
 
-      web-check:
+    #******************************** WEB-CHECK ****************************************************************************************************
+    
+      web-check:                                          #Petite appli sympa pour checker la sécurité de sites web
     container_name: Web-Check
     image: lissy93/web-check
     ports:
       - 22003:3000
     restart: unless-stopped
 
-    # *********************************************************liste ci dessous en attente ***********************************
+    #******************************** UPTIME-KUMA ****************************************************************************************************
+    
+  uptime-kuma:                        #Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peux envoyer des alertes (mail ou autre) automatiquement en cas de souci
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+      - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
+    ports:
+      - "22031:3001"  # <Host Port>:<Container Port>
+    restart: unless-stopped
+
+    #******************************** JENKINS ****************************************************************************************************
+    
+  jenkins:                            #Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - '22080:8080' # port pour tapper l'interface de management
+      - '22005:50000'
+    container_name: jenkins
+    volumes:
+      - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
+      - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+    #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
+
+services:
+  postgres_n8n:
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER_N8N
+      - POSTGRES_PASSWORD_N8N
+      - POSTGRES_DB_N8N
+      - POSTGRES_NON_ROOT_USER_N8N
+      - POSTGRES_NON_ROOT_PASSWORD_N8N
+    volumes:
+      - db_storage:/var/lib/postgresql/data
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    port:
+      - '22032:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres_n8n
+      - DB_POSTGRESDB_PORT=22032
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB_N8N}
+      - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER_N8N}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD_N8N}
+    ports:
+      - 22078:5678
+    links:
+      - postgres_n8n
+    volumes:
+      - n8n_storage:/home/node/.n8n
+    depends_on:
+      postgres_n8n:
+        condition: service_healthy
+
+    
+
+    # ********************************liste ci dessous en attente ****************************************************************************************************
 
 
-# ***********************automatisation de la conf sans passer par nginx-proxy-manager
+# *********************** automatisation de la conf sans passer par nginx-proxy-manager ****************************************************************************************************
     #  nginx:
 #    restart: always
 #    image: nginx
@@ -131,60 +189,64 @@ services:
 
 # autre solution de monitoring + secu : wazuh 
 
-# ************************* WAF
+#******************************** WAF ****************************************************************************************************
 #
 #Gros boulot en perspective, et limitations à examiner : https://github.com/coreruleset/modsecurity-crs-docker/blob/main/docker-compose.yaml
+#
 
- nextcloud-aio-mastercontainer:
-    image: nextcloud/all-in-one:latest
-    init: true
-    restart: always
-    container_name: nextcloud-aio-mastercontainer # This line is not allowed to be changed as otherwise AIO will not work correctly
-    volumes:
-      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config # This line is not allowed to be changed as otherwise the built-in backup solution will not work
-      - /var/run/docker.sock:/var/run/docker.sock:ro # May be changed on macOS, Windows or docker rootless. See the applicable documentation. If adjusting, don't forget to also set 'WATCHTOWER_DOCKER_SOCKET_PATH'!
-    ports:
-      - 22080:80 # Can be removed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
-      - 22088:8080
-      - 22043:8443 # Can be removed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
-    # environment: # Is needed when using any of the options below
-      # AIO_DISABLE_BACKUP_SECTION: false # Setting this to true allows to hide the backup section in the AIO interface. See https://github.com/nextcloud/all-in-one#how-to-disable-the-backup-section
-      # APACHE_PORT: 11000 # Is needed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
-      # APACHE_IP_BINDING: 127.0.0.1 # Should be set when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else) that is running on the same host. See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
-      # BORG_RETENTION_POLICY: --keep-within=7d --keep-weekly=4 --keep-monthly=6 # Allows to adjust borgs retention policy. See https://github.com/nextcloud/all-in-one#how-to-adjust-borgs-retention-policy
-      # COLLABORA_SECCOMP_DISABLED: false # Setting this to true allows to disable Collabora's Seccomp feature. See https://github.com/nextcloud/all-in-one#how-to-disable-collaboras-seccomp-feature
-       NEXTCLOUD_DATADIR: /mnt/ncdata # Allows to set the host directory for Nextcloud's datadir. ⚠️⚠️⚠️ Warning: do not set or adjust this value after the initial Nextcloud installation is done! See https://github.com/nextcloud/all-in-one#how-to-change-the-default-location-of-nextclouds-datadir
-       NEXTCLOUD_MOUNT: /mnt/ncmount # Allows the Nextcloud container to access the chosen directory on the host. See https://github.com/nextcloud/all-in-one#how-to-allow-the-nextcloud-container-to-access-directories-on-the-host
-      # NEXTCLOUD_UPLOAD_LIMIT: 10G # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-upload-limit-for-nextcloud
-      # NEXTCLOUD_MAX_TIME: 3600 # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-max-execution-time-for-nextcloud
-      # NEXTCLOUD_MEMORY_LIMIT: 512M # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-php-memory-limit-for-nextcloud
-      # NEXTCLOUD_TRUSTED_CACERTS_DIR: /path/to/my/cacerts # CA certificates in this directory will be trusted by the OS of the nexcloud container (Useful e.g. for LDAPS) See See https://github.com/nextcloud/all-in-one#how-to-trust-user-defined-certification-authorities-ca
-      # NEXTCLOUD_STARTUP_APPS: deck twofactor_totp tasks calendar contacts notes # Allows to modify the Nextcloud apps that are installed on starting AIO the first time. See https://github.com/nextcloud/all-in-one#how-to-change-the-nextcloud-apps-that-are-installed-on-the-first-startup
-      # NEXTCLOUD_ADDITIONAL_APKS: imagemagick # This allows to add additional packages to the Nextcloud container permanently. Default is imagemagick but can be overwritten by modifying this value. See https://github.com/nextcloud/all-in-one#how-to-add-os-packages-permanently-to-the-nextcloud-container
-      # NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS: imagick # This allows to add additional php extensions to the Nextcloud container permanently. Default is imagick but can be overwritten by modifying this value. See https://github.com/nextcloud/all-in-one#how-to-add-php-extensions-permanently-to-the-nextcloud-container
-      # NEXTCLOUD_ENABLE_DRI_DEVICE: true # This allows to enable the /dev/dri device in the Nextcloud container. ⚠️⚠️⚠️ Warning: this only works if the '/dev/dri' device is present on the host! If it should not exist on your host, don't set this to true as otherwise the Nextcloud container will fail to start! See https://github.com/nextcloud/all-in-one#how-to-enable-hardware-transcoding-for-nextcloud
-      # NEXTCLOUD_KEEP_DISABLED_APPS: false # Setting this to true will keep Nextcloud apps that are disabled in the AIO interface and not uninstall them if they should be installed. See https://github.com/nextcloud/all-in-one#how-to-keep-disabled-apps
-      # TALK_PORT: 3478 # This allows to adjust the port that the talk container is using. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-talk-port
-      # WATCHTOWER_DOCKER_SOCKET_PATH: /var/run/docker.sock # Needs to be specified if the docker socket on the host is not located in the default '/var/run/docker.sock'. Otherwise mastercontainer updates will fail. For macos it needs to be '/var/run/docker.sock'
-    # networks: # Is needed when you want to create the nextcloud-aio network with ipv6-support using this file, see the network config at the bottom of the file
-      # - nextcloud-aio # Is needed when you want to create the nextcloud-aio network with ipv6-support using this file, see the network config at the bottom of the file
-    # security_opt: ["label:disable"] # Is needed when using SELinux
+#******************************** NEXTCLOUD ****************************************************************************************************
+# nextcloud-aio-mastercontainer:
+#    image: nextcloud/all-in-one:latest
+#    init: true
+#    restart: always
+#    container_name: nextcloud-aio-mastercontainer # This line is not allowed to be changed as otherwise AIO will not work correctly
+#    volumes:
+#      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config # This line is not allowed to be changed as otherwise the built-in backup solution will not work
+#      - /var/run/docker.sock:/var/run/docker.sock:ro # May be changed on macOS, Windows or docker rootless. See the applicable documentation. If adjusting, don't forget to also set 'WATCHTOWER_DOCKER_SOCKET_PATH'!
+#    ports:
+#      - 22080:80 # Can be removed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
+#      - 22088:8080
+#      - 22043:8443 # Can be removed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
+#    # environment: # Is needed when using any of the options below
+#      # AIO_DISABLE_BACKUP_SECTION: false # Setting this to true allows to hide the backup section in the AIO interface. See https://github.com/nextcloud/all-in-one#how-to-disable-the-backup-section
+#      # APACHE_PORT: 11000 # Is needed when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else). See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
+#      # APACHE_IP_BINDING: 127.0.0.1 # Should be set when running behind a web server or reverse proxy (like Apache, Nginx, Cloudflare Tunnel and else) that is running on the same host. See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
+#      # BORG_RETENTION_POLICY: --keep-within=7d --keep-weekly=4 --keep-monthly=6 # Allows to adjust borgs retention policy. See https://github.com/nextcloud/all-in-one#how-to-adjust-borgs-retention-policy
+#      # COLLABORA_SECCOMP_DISABLED: false # Setting this to true allows to disable Collabora's Seccomp feature. See https://github.com/nextcloud/all-in-one#how-to-disable-collaboras-seccomp-feature
+#       NEXTCLOUD_DATADIR: /mnt/ncdata # Allows to set the host directory for Nextcloud's datadir. ⚠️⚠️⚠️ Warning: do not set or adjust this value after the initial Nextcloud installation is done! See https://github.com/nextcloud/all-in-one#how-to-change-the-default-location-of-nextclouds-datadir
+#       NEXTCLOUD_MOUNT: /mnt/ncmount # Allows the Nextcloud container to access the chosen directory on the host. See https://github.com/nextcloud/all-in-one#how-to-allow-the-nextcloud-container-to-access-directories-on-the-host
+#      # NEXTCLOUD_UPLOAD_LIMIT: 10G # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-upload-limit-for-nextcloud
+#      # NEXTCLOUD_MAX_TIME: 3600 # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-max-execution-time-for-nextcloud
+#      # NEXTCLOUD_MEMORY_LIMIT: 512M # Can be adjusted if you need more. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-php-memory-limit-for-nextcloud
+#      # NEXTCLOUD_TRUSTED_CACERTS_DIR: /path/to/my/cacerts # CA certificates in this directory will be trusted by the OS of the nexcloud container (Useful e.g. for LDAPS) See See https://github.com/nextcloud/all-in-one#how-to-trust-user-defined-certification-authorities-ca
+#      # NEXTCLOUD_STARTUP_APPS: deck twofactor_totp tasks calendar contacts notes # Allows to modify the Nextcloud apps that are installed on starting AIO the first time. See https://github.com/nextcloud/all-in-one#how-to-change-the-nextcloud-apps-that-are-installed-on-the-first-startup
+#      # NEXTCLOUD_ADDITIONAL_APKS: imagemagick # This allows to add additional packages to the Nextcloud container permanently. Default is imagemagick but can be overwritten by modifying this value. See https://github.com/nextcloud/all-in-one#how-to-add-os-packages-permanently-to-the-nextcloud-container
+#      # NEXTCLOUD_ADDITIONAL_PHP_EXTENSIONS: imagick # This allows to add additional php extensions to the Nextcloud container permanently. Default is imagick but can be overwritten by modifying this value. See https://github.com/nextcloud/all-in-one#how-to-add-php-extensions-permanently-to-the-nextcloud-container
+#      # NEXTCLOUD_ENABLE_DRI_DEVICE: true # This allows to enable the /dev/dri device in the Nextcloud container. ⚠️⚠️⚠️ Warning: this only works if the '/dev/dri' device is present on the host! If it should not exist on your host, don't set this to true as otherwise the Nextcloud container will fail to start! See https://github.com/nextcloud/all-in-one#how-to-enable-hardware-transcoding-for-nextcloud
+#      # NEXTCLOUD_KEEP_DISABLED_APPS: false # Setting this to true will keep Nextcloud apps that are disabled in the AIO interface and not uninstall them if they should be installed. See https://github.com/nextcloud/all-in-one#how-to-keep-disabled-apps
+#      # TALK_PORT: 3478 # This allows to adjust the port that the talk container is using. See https://github.com/nextcloud/all-in-one#how-to-adjust-the-talk-port
+#      # WATCHTOWER_DOCKER_SOCKET_PATH: /var/run/docker.sock # Needs to be specified if the docker socket on the host is not located in the default '/var/run/docker.sock'. Otherwise mastercontainer updates will fail. For macos it needs to be '/var/run/docker.sock'
+#    # networks: # Is needed when you want to create the nextcloud-aio network with ipv6-support using this file, see the network config at the bottom of the file
+#      # - nextcloud-aio # Is needed when you want to create the nextcloud-aio network with ipv6-support using this file, see the network config at the bottom of the file
+#    # security_opt: ["label:disable"] # Is needed when using SELinux
 
-  # # Optional: Caddy reverse proxy. See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
-  # # You can find further examples here: https://github.com/nextcloud/all-in-one/discussions/588
-  # caddy:
-  #   image: caddy:alpine
-  #   restart: always
-  #   container_name: caddy
-  #   volumes:
-  #     - ./Caddyfile:/etc/caddy/Caddyfile
-  #     - ./certs:/certs
-  #     - ./config:/config
-  #     - ./data:/data
-  #     - ./sites:/srv
-  #   network_mode: "host"
+#  # # Optional: Caddy reverse proxy. See https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md
+#  # # You can find further examples here: https://github.com/nextcloud/all-in-one/discussions/588
+#  # caddy:
+#  #   image: caddy:alpine
+#  #   restart: always
+#  #   container_name: caddy
+#  #   volumes:
+#  #     - ./Caddyfile:/etc/caddy/Caddyfile
+#  #     - ./certs:/certs
+#  #     - ./config:/config
+#  #     - ./data:/data
+#  #     - ./sites:/srv
+#  #   network_mode: "host"
 
-volumes: # If you want to store the data on a different drive, see https://github.com/nextcloud/all-in-one#how-to-store-the-filesinstallation-on-a-separate-drive
-  nextcloud_aio_mastercontainer:
-    name: nextcloud_aio_mastercontainer # This line is not allowed to be changed as otherwise the built-in backup solution will not work
+#volumes: # If you want to store the data on a different drive, see https://github.com/nextcloud/all-in-one#how-to-store-the-filesinstallation-on-a-separate-drive
+#  nextcloud_aio_mastercontainer:
+#    name: nextcloud_aio_mastercontainer # This line is not allowed to be changed as otherwise the built-in backup solution will not work
 
+#****************************************************************************************************************************************************
+#
