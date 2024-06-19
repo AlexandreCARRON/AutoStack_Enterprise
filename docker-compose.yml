@@ -1,34 +1,33 @@
 version: '3.9'
 services:
+  #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
 
-    #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
-
-  nginx-proxy-manager:  #principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
+  nginx-proxy-manager:  # principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
     image: 'jc21/nginx-proxy-manager:latest'
     ports:
       - '80:80'
-      - '22081:81' # port pour tapper l'interface de management
+      - '22081:81' # port pour taper l'interface de management
       - '443:443'
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
       - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
     restart: unless-stopped
-    
-    #******************************** PORTAINER ****************************************************************************************************
-    
-  portainer:                            #Permet de visualiser et gérer vos container et volumes via une interface web simplifiée
+
+  #******************************** PORTAINER ****************************************************************************************************
+
+  portainer:  # Permet de visualiser et gérer vos conteneurs et volumes via une interface web simplifiée
     image: portainer/portainer-ce:latest
     container_name: portainer
-    command: -H unix:///var/run/docker.sock  #obligatoire pour lier portainer à docker en local sur la machine
+    command: -H unix:///var/run/docker.sock  # obligatoire pour lier portainer à docker en local sur la machine
     ports:
-      - "22090:9443" # port pour tapper l'interface de management
+      - "22090:9443" # port pour taper l'interface de management
     volumes:
       - ./volumes/Portainer/data:/data
       - ./volumes/Portainer/var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
-    #******************************** ODOO ****************************************************************************************************
+  #******************************** ODOO ****************************************************************************************************
 
   db:
     image: postgres:16
@@ -38,17 +37,17 @@ services:
       - POSTGRES_PASSWORD=changemeoryouilldie
       - POSTGRES_DB=postgres
       - PGDATA=/var/lib/postgresql/data/pgdata
-    restart: always             # run as a service
+    restart: always
     volumes:
       - ./volumes/postgresql/data:/var/lib/postgresql/data
-  
+
   odoo17:
     image: odoo:17
     user: root
     depends_on:
       - db
     ports:
-      - "22017:8069" # port pour tapper l'interface de management
+      - "22017:8069" # port pour taper l'interface de management
       - "22018:8072" # live chat
     tty: true
     command: --
@@ -57,42 +56,39 @@ services:
       - USER=odoo_client
       - PASSWORD=changemeoryouilldie
     volumes:
-      #- /etc/timezone:/etc/timezone:ro
-      #- /etc/localtime:/etc/localtime:ro
-      # - ./entrypoint.sh:/entrypoint.sh   # if you want to install additional Python packages, uncomment this line!
       - ./volumes/Odoo/odoo-web-data-client:/var/lib/odoo
       - ./volumes/Odoo/addons:/mnt/extra-addons
       - ./volumes/Odoo/etc:/etc/odoo
-    restart: always             # run as a service
+    restart: always
 
-    #******************************** WEB-CHECK ****************************************************************************************************
-    
-      web-check:                                          #Petite appli sympa pour checker la sécurité de sites web
+  #******************************** WEB-CHECK ****************************************************************************************************
+
+  web-check:  # Petite appli sympa pour checker la sécurité de sites web
     container_name: Web-Check
     image: lissy93/web-check
     ports:
       - 22003:3000
     restart: unless-stopped
 
-    #******************************** UPTIME-KUMA ****************************************************************************************************
-    
-  uptime-kuma:                        #Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peux envoyer des alertes (mail ou autre) automatiquement en cas de souci
+  #******************************** UPTIME-KUMA ****************************************************************************************************
+
+  uptime-kuma:  # Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peut envoyer des alertes (mail ou autre) automatiquement en cas de souci
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
     volumes:
       - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
     ports:
-      - "22031:3001"  # <Host Port>:<Container Port>
+      - "22031:3001"
     restart: unless-stopped
 
-    #******************************** JENKINS ****************************************************************************************************
-    
-  jenkins:                            #Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
+  #******************************** JENKINS ****************************************************************************************************
+
+  jenkins:  # Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
     image: jenkins/jenkins:lts
     privileged: true
     user: root
     ports:
-      - '22080:8080' # port pour tapper l'interface de management
+      - '22080:8080' # port pour taper l'interface de management
       - '22005:50000'
     container_name: jenkins
     volumes:
@@ -100,7 +96,7 @@ services:
       - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
-    #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
+  #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
 
   postgres_n8n:
     image: postgres:16
@@ -114,7 +110,7 @@ services:
     volumes:
       - ./volumes/n8n/db_storage:/var/lib/postgresql/data
       - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
-    port:
+    ports:
       - '22032:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
@@ -141,6 +137,7 @@ services:
     depends_on:
       postgres_n8n:
         condition: service_healthy
+
 
     
 
