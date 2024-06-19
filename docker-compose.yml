@@ -40,7 +40,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
     restart: always             # run as a service
     volumes:
-        - ./volumes/postgresql/data:/var/lib/postgresql/data
+      - ./volumes/postgresql/data:/var/lib/postgresql/data
   
   odoo17:
     image: odoo:17
@@ -102,7 +102,6 @@ services:
 
     #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
 
-services:
   postgres_n8n:
     image: postgres:16
     restart: always
