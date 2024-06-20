@@ -9,11 +9,13 @@ Mouai... C'est en cours de dev !! Ca avance au fur et à mesure, et il y a encor
 Pleins de mauvaises pratiques tu trouveras ici jeune padawan (genre des :ro inexistants... mais sais-tu seulement de quoi je parle ?) ! Pour les maîtres Jedi, j'ai soif d'apprentissage, donc n'hésite pas à commenter les fichiers pour qu'on puisse améliorer ça ensemble ! Dans la bienveillance tu agiras, en toute humilité je réagirai !!
 
 Voici à date les améliorations à venir que j'envisage à court terme : 
+- Scinder les services et les appeler à la demande
 - Améliorer la gestion des variables
 - Script d'automatisation config machine hôte
 - Meilleur gestion des entrypoint
 - Suppression des dossiers et fichiers (fake.md notamment) inutiles
 - Pondre une fucking doc digne de ce nom
+- Passer par les bons tuyaux pour faire mon backlog !!!
 
 Je suis preneur de toute aide autour de ce projet. En gros, l'idée est de faire une stack facile à mettre en place pour qu'on puisse aider les startups de notre Startup Nation (Youhou !), ou autres projets à impact, à avoir des outils efficients et peu coûteux pour qu'ils puissent tester leurs idées et scaler rapidement (je me fais presque peur avec mon vocabulaire !). Bref ! En vrai, je m'amuse à faire un projet qui, je l'espère, servira à d'autres pour gagner du temps sur leurs déploiements sans trop dépenser d'argent !
 
