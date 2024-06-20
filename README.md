@@ -33,10 +33,10 @@ Bisous Merci Bisous !
 1. Se logguer sur votre serveur fraîchement installé.
 2. Créer les fichiers suivants sur le serveur host et copier-coller le contenu des fichiers depuis le repo Git. 
 
-- Copiez le contenu trouvé dans <u>./script-conf-server-D12.sh</u> dans ce fichier : `sudo nano script.sh`
-- Copiez les lignes relatives à CONFIG SERVEUR du fichier <u>./.env</u> dans ce fichier : `sudo nano .env`
+- Copiez le contenu trouvé dans ./script-conf-server-D12.sh dans ce fichier : `sudo nano script.sh`
+- Copiez les lignes relatives à CONFIG SERVEUR du fichier ./.env dans ce fichier : `sudo nano .env`
 
-3. Rendez exécutable le fichier <u>script.sh</u> : `sudo chmod +x script.sh`
+3. Rendez exécutable le fichier script.sh : `sudo chmod +x script.sh`
 4. Exécutez ensuite le script : `./script.sh`
 
 #### VOILA ! /!\ NE PAS OUBLIER DE SUPPRIMER LES 2 FICHIERS CRÉÉS POUR UN MINIMUM DE SÉCURITÉ /!\
