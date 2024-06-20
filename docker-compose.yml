@@ -128,6 +128,7 @@ services:
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+      - N8N_SECURE_COOKIE=false               # A ENLEVER, mis uniquement pour faire les premiers tests !
     ports:
       - 22078:5678
     links:
