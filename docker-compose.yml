@@ -9,9 +9,9 @@ services:
       - '443:443'
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
-      - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
-      - ./volumes/Nginx-proxy-manager/logs:/run/uncaught-logs/current
+#      - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d  #problème de droits en écriture, ne pas utiliser tel quel
+#      - ./volumes/Nginx-proxy-manager/logs:/run/uncaught-logs/current     #idem
     restart: unless-stopped
 
   #******************************** PORTAINER ****************************************************************************************************
