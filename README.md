@@ -33,10 +33,10 @@ Bisous Merci Bisous !
 1. Se logguer sur votre serveur fraîchement installé.
 2. Créer les fichiers suivants sur le serveur host et copier-coller le contenu des fichiers depuis le repo Git. 
 
-- Copiez le contenu trouvé dans `./script-conf-server-D12.sh` dans ce fichier : `sudo nano script.sh`
-- Copiez les lignes relatives à CONFIG SERVEUR du fichier `./.env` dans ce fichier : `sudo nano .env`
+- Copiez le contenu trouvé dans <u>./script-conf-server-D12.sh</u> dans ce fichier : `sudo nano script.sh`
+- Copiez les lignes relatives à CONFIG SERVEUR du fichier <u>./.env</u> dans ce fichier : `sudo nano .env`
 
-3. Rendez exécutable le fichier `script.sh` : `sudo chmod +x script.sh`
+3. Rendez exécutable le fichier <u>script.sh</u> : `sudo chmod +x script.sh`
 4. Exécutez ensuite le script : `./script.sh`
 
 #### VOILA ! /!\ NE PAS OUBLIER DE SUPPRIMER LES 2 FICHIERS CRÉÉS POUR UN MINIMUM DE SÉCURITÉ /!\
@@ -59,14 +59,14 @@ En non verbeux pour pouvoir utiliser le shell ensuite (le `-d` signifie daemon =
 
 ### Gestion des mots de passe
 
-/!\ Attention à bien changer les mots de passe dans le fichier `docker-compose.yml` ET dans le `odoo.conf` ET dans le `.env` (à terme plus de mdp dans `docker-compose.yml`) !!! /!\
+/!\ Attention à bien changer les mots de passe dans le fichier `docker-compose.yml` ET dans le `odoo.conf` ET dans le .env (à terme plus de mdp dans `docker-compose.yml`) !!! /!\
 
 ### Gestion des ports
 
 Les ports exposés sont déjà des ports pas communs donc c'est relativement bien. 
 Mais ce repo est public, donc des petits malins peuvent peut-être connaître vos ports d'exposition si vous ne les changez pas. 
 
-Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faites un `docker-compose down`, éditez le fichier `docker-compose.yml`, puis relancez. Sorry pour les manips, mais console toi en te disant que c'est le métier qui rentre jeune padawan !
+Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faites un `docker-compose down`, éditez le fichier docker-compose.yml, puis relancez. Sorry pour les manips, mais console toi en te disant que c'est le métier qui rentre jeune padawan !
 
 ## Commandes utiles
 
