@@ -2,7 +2,7 @@ services:
   #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
 
   nginx-proxy-manager:  # principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
-    image: 'jc21/nginx-proxy-manager:2'
+    image: 'jc21/nginx-proxy-manager:latest'
     ports:
       - '80:80'
       - '22081:81' # port pour taper l'interface de management
@@ -11,6 +11,7 @@ services:
       - ./volumes/Nginx-proxy-manager/data:/data
       - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d
       - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+      - ./volumes/Nginx-proxy-manager/logs:/run/uncaught-logs/current
     restart: unless-stopped
 
   #******************************** PORTAINER ****************************************************************************************************
