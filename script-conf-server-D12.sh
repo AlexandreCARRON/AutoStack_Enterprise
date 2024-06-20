@@ -21,13 +21,13 @@ fi
 
 # ********************************************************************* Changements MDP et DROITS *************************************
 # Changer le mot de passe pour l'utilisateur root
-echo "Changement du mots de passe pour l'utilisateurs root"
+echo "### Changement du mots de passe pour l'utilisateurs root"
 echo "root:$NEW_PASSWORD" | sudo chpasswd
 
 # Créer le nouvel utilisateur et affecter mot de passe
-echo "Création du nouvel utilisateur $NEW_USER..."
+echo "### Création du nouvel utilisateur $NEW_USER..."
 sudo useradd -m -s /bin/bash $NEW_USER
-echo "Changement du mots de passe pour l'utilisateurs $NEW_USER..."
+echo "### Changement du mots de passe pour l'utilisateurs $NEW_USER..."
 echo "$NEW_USER:$NEW_PASSWORD" | sudo chpasswd
 
 # Ajouter le nouvel utilisateur aux groupes sudo et docker
@@ -38,12 +38,12 @@ sudo usermod -aG docker $NEW_USER
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
 # Désactiver le compte debian
-echo "Désactivation du compte debian..."
+echo "### Désactivation du compte debian..."
 sudo usermod -L debian
 
 # ********************************************************************* Installation DOCKER *************************************
 # Installer Docker Engine
-echo "Installation de Docker Engine..."
+echo "### Installation de Docker Engine..."
 sudo apt-get update
 sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
@@ -51,7 +51,7 @@ sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyring
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 # Ajouter le repo aux sources Apt
-echo "Ajout du repo aux sources Apt"
+echo "### Ajout du repo aux sources Apt"
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
@@ -60,21 +60,21 @@ echo \
 sudo apt-get update
 
 # Installation des packages Docker
-echo "Installation des packages Docker"
+echo "### Installation des packages Docker"
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # ********************************************************************* Installation GIT (inutile en principe) *************************************
 # Installer Git
-echo "Installation de Git..."
+echo "### Installation de Git..."
 sudo apt-get install -y git
 
 # ********************************************************************* Installation FAIL2BAN *************************************
 # Installation et configuration de Fail2Ban
-echo "Installation de Fail2Ban..."
+echo "### Installation de Fail2Ban..."
 sudo apt-get install -y fail2ban
 
 # Configuration de Fail2Ban (à terme : fichier de conf à appeler via ./host/fail2ban/jail.conf)
-echo "Configuration de Fail2Ban..."
+echo "### Configuration de Fail2Ban..."
 sudo bash -c 'cat << EOF > /etc/fail2ban/jail.local
 [DEFAULT]
 bantime  = 10m
@@ -99,10 +99,10 @@ enabled = true
 port = 2375
 EOF'
 
-echo "Les paramètre spécifiques de surveillance de protocols ont été implémentés."
+echo "### Les paramètre spécifiques de surveillance de protocols ont été implémentés."
 
 # Redémarrer Fail2Ban
-echo "Redémarrage de Fail2Ban..."
+echo "### Redémarrage de Fail2Ban..."
 sudo systemctl restart fail2ban
 
-echo "Fin de l'éxécution du script de paramétrage automatique"
+echo "######### Fin de l'éxécution du script de paramétrage automatique #########"
