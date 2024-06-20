@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Penser à ajouter sécurisation connexion zutlenommechape !
+
 # Charger les variables d'environnement à partir du fichier .env
 if [ -f .env ]; then
   export $(cat .env | sed 's/#.*//g' | xargs)
