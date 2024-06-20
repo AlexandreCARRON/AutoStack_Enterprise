@@ -22,7 +22,7 @@ Voila fin du disclamer : Pour ton infra, je m'occupe de rien, tu s'occupe de tou
 
 Bisous Merci Bisous !
 
-<h1>Pré-paramétrage</h1>
+<h1>Pré-paramétrage du serveur host</h1>
 
 <h2>pré-paramétrage à la mano (très light)</h2>
 
