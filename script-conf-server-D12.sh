@@ -85,15 +85,6 @@ maxretry = 5
 enabled = true
 port = ssh
 
-#[http-get-dos]
-#enabled = true
-#port = http,https
-#filter = http-get-dos
-#logpath = /var/log/nginx/access.log
-#maxretry = 300
-#findtime = 300
-#bantime = 600
-
 [docker]
 enabled = true
 port = 2375
@@ -101,8 +92,20 @@ EOF'
 
 echo "### Les paramètre spécifiques de surveillance de protocols ont été implémentés."
 
+# Vérifier la configuration de Fail2Ban
+echo "### Vérification de la configuration de Fail2Ban..."
+sudo fail2ban-client -d
+if [ $? -ne 0 ]; then
+  echo "Erreur dans la configuration de Fail2Ban. Veuillez vérifier le fichier /etc/fail2ban/jail.local."
+  exit 1
+fi
+
 # Redémarrer Fail2Ban
 echo "### Redémarrage de Fail2Ban..."
 sudo systemctl restart fail2ban
+
+# Vérifier l'état du service Fail2Ban
+echo "### Vérification de l'état du service Fail2ban après redémarrage"
+sudo systemctl status fail2ban
 
 echo "######### Fin de l'éxécution du script de paramétrage automatique #########"
