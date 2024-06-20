@@ -32,8 +32,11 @@ Installer git : <code>sudo apt install git</code>
 
 <h2>pré-paramétrage automatisé via script</h2>
 Se logguer sur votre serveur fraichement installé.
+
 Créer les fichiers suivants sur le serveur host et copier coller le contenu des fichiers depuis le repo Git. 
+
 Copiez le contenu trouvé dans ./script-conf-server-D12.sh dans ce fichier : <code>sudo nano script.sh</code>
+
 Copiez les lignes relatives à CONFIG SERVEUR du fichier ./.env dans ce fichier : <code>sudo nano .env</code>
 
 Rendez exécutable le fichier script.sh : <code>sudo chmod +x script.sh</code>
@@ -51,24 +54,28 @@ Importer le repo : <code>sudo git clone https://github.com/AlexandreCARRON/Odoo-
 Se rendre dans le dossier copié : <code>cellelatulatrouvetoutseulnonmais!</codde>
 
 Pour le premier dépoiement histoire de vérifier que tout se passe bien : 
+
 <code> sudo docker-compose up </code>
 
 En non verbeux pour pouvoir utiliser le shell ensuite (le -d s'ignifie daemon => s'execute en arrière plan)
+
 <code> sudo docker-compose up -d </code>
 
 <h1>Sécurité</h1>
 
 <h2>Gestion des mots de passe</h2> 
 /!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf ET dans le .env (a terme plus de mdp dans docker-compose.yml) !!! /!\
+
 <h2>Gestion des ports</h2>
 Les ports exposés sont déjà des ports pas communs donc c'est relativement bien. 
 Mais ce repo est public, donc des petits malins peuvent peut être connaitre vos ports d'exposition si vous ne les changez pas. 
 
-Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faite un docker compose down, éditez le fichier docker-compose.yml, puis relancez. Sorry pour les manips, mais console toi en te disans que c'est le métier qui rentre jeune padawan !
+Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faite un <code>docker compose down</code>, éditez le fichier docker-compose.yml, puis relancez. Sorry pour les manips, mais console toi en te disans que c'est le métier qui rentre jeune padawan !
 
 <h1>Commandes utiles</h1>
 
-En principe, avant de tapper les commandes, vous avez mis votre utilisateur dans les sudoers, donc le sudo en début de commande n'est pas nécessaire...
+En principe, avant de taper les commandes, vous avez mis votre utilisateur dans les sudoers, donc le sudo en début de commande n'est pas nécessaire...
+
 <h2>liste des containers UP</h2>
 <code>sudo docker ps</code>
 <h2>liste des volumes</h2>
