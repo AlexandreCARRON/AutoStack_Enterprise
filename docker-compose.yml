@@ -29,7 +29,7 @@ services:
 
   #******************************** ODOO ****************************************************************************************************
 
-  db:
+  db:                                #base de donnée PostgreSQL de l'application Odoo
     image: postgres:16
     user: root
     environment:
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./volumes/postgresql/data:/var/lib/postgresql/data
 
-  odoo17:
+  odoo17:                           # Application Wordpress Like, en bien plus solide et sécurisé, et permettant de déployer ERP / CRM / outil RH / outil Marketing automation (UTM) / outil E-Learning / etc.
     image: odoo:17
     user: root
     depends_on:
@@ -63,7 +63,7 @@ services:
 
   #******************************** WEB-CHECK ****************************************************************************************************
 
-  web-check:  # Petite appli sympa pour checker la sécurité de sites web
+  web-check:                          # Petite appli sympa pour checker la sécurité de sites web
     container_name: Web-Check
     image: lissy93/web-check
     ports:
@@ -72,7 +72,7 @@ services:
 
   #******************************** UPTIME-KUMA ****************************************************************************************************
 
-  uptime-kuma:  # Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peut envoyer des alertes (mail ou autre) automatiquement en cas de souci
+  uptime-kuma:                         # Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peut envoyer des alertes (mail ou autre) automatiquement en cas de souci
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
     volumes:
@@ -83,7 +83,7 @@ services:
 
   #******************************** JENKINS ****************************************************************************************************
 
-  jenkins:  # Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
+  jenkins:                              # Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
     image: jenkins/jenkins:lts
     privileged: true
     user: root
@@ -98,7 +98,7 @@ services:
 
   #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
 
-  postgres_n8n:
+  postgres_n8n:                      #BDD posgreSQL liée à l'application N8N
     image: postgres:16
     restart: always
     environment:
@@ -118,7 +118,7 @@ services:
       timeout: 5s
       retries: 10
 
-  n8n:
+  n8n:                               #Outil puissant d'automatisation via API. Equivalent "Make" en autohébergé. Ici installé sans cloisonner les workers (à cloisonner si grande quantités à traiter)
     image: docker.n8n.io/n8nio/n8n
     restart: always
     environment:
