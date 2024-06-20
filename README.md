@@ -20,6 +20,6 @@ En non verbeux pour pouvoir utiliser le shell ensuite (le -d s'ignifie daemon =>
 <code> sudo docker-compose up -d </code>
 
 
-Gestion des mots de passe : 
+<h1>Gestion des mots de passe</h1> 
 /!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf ET dans le .env (a terme plus de mdp dans docker-compose.yml) !!! /!\
 
