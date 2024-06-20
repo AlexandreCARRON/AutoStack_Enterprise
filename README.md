@@ -1,4 +1,4 @@
-# Projet en cours, Readme à rédiger
+# Projet en cours, Readme très évolutif...
 
 ## Disclaimer
 
