@@ -22,16 +22,32 @@ Voila fin du disclamer : Pour ton infra, je m'occupe de rien, tu s'occupe de tou
 Bisous Merci Bisous !
 
 <h1>Pré-paramétrage</h1>
+<h2>pré-paramétrage automatisé via script</h2>
+Se logguer sur votre serveur fraichement installé.
+Créer les fichiers suivants sur le serveur host et copier coller le contenu des fichiers depuis le repo Git. 
+Copiez le contenu trouvé dans ./script-conf-server-D12.sh dans ce fichier : <code>sudo nano script.sh</code>
+Copiez les lignes relatives à CONFIG SERVEUR du fichier ./.env dans ce fichier : <code>sudo nano .env</code>
+
+Rendez exécutable le fichier script.sh : <code>sudo chmod +x script.sh</code>
+
+Executez ensuite le script : <code>./script.sh</code>
+
+<h3>VOILA ! /!\ NE PAS OUBLIER DE SUPPRIMER LES 2 FICHIERS CREES POUR UN MINIMUM DE SECURITE /!\</h3>
+
+<h2>pré-paramétrage à la mano (très light)</h2>
 
 Installer docker engine : <link>https://docs.docker.com/engine/install/</link>
 
 Installer git : <code>sudo apt install git</code>
 
-Importer le repo : <code>sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git</code>
+
 
 
 <h1>Déploiement de l'infra</h1>
-Commande à executer : 
+
+Importer le repo : <code>sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git</code>
+
+Se rendre dans le dossier copié : <code>cellelatulatrouvetoutseulnonmais!</codde>
 
 Pour le premier dépoiement histoire de vérifier que tout se passe bien : 
 <code> sudo docker-compose up </code>
