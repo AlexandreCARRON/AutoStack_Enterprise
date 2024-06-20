@@ -73,7 +73,7 @@ sudo apt-get install -y git
 echo "Installation de Fail2Ban..."
 sudo apt-get install -y fail2ban
 
-# Configuration de Fail2Ban
+# Configuration de Fail2Ban (à terme : fichier de conf à appeler via ./host/fail2ban/jail.conf)
 echo "Configuration de Fail2Ban..."
 sudo bash -c 'cat << EOF > /etc/fail2ban/jail.local
 [DEFAULT]
@@ -99,8 +99,10 @@ enabled = true
 port = 2375
 EOF'
 
+echo "Les paramètre spécifiques de surveillance de protocols ont été implémentés."
+
 # Redémarrer Fail2Ban
 echo "Redémarrage de Fail2Ban..."
 sudo systemctl restart fail2ban
 
-echo "Exécution du script terminée avec succès !"
+echo "Fin de l'éxécution du script de paramétrage automatique"
