@@ -5,19 +5,19 @@ Projet en cours, Readme à rédiger
 
 Installer docker engine : <link>https://docs.docker.com/engine/install/</link>
 
-Installer git : <code>sudo apt install git</code>
+Installer git : \n<code>sudo apt install git</code>
 
-Importer le repo : <code>sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git</code>
+Importer le repo : \n<code>sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git</code>
 
 
 <h1>Déploiement de l'infra</h1>
 Commande à executer : 
 
 Pour le premier dépoiement histoire de vérifier que tout se passe bien : 
-<code> sudo docker-compose up </code>
+\n<code> sudo docker-compose up </code>
 
 En non verbeux pour pouvoir utiliser le shell ensuite (le -d s'ignifie daemon => s'execute en arrière plan)
-<code> sudo docker-compose up -d </code>
+\n<code> sudo docker-compose up -d </code>
 
 
 Gestion des mots de passe : 
