@@ -1,8 +1,6 @@
 #!/bin/bash
 
-#Penser à ajouter sécurisation connexion zutlenommechape !
-
-# Charger les variables d'environnement à partir du fichier .env
+# ********************************************************************* Charger les variables d'environnement à partir du fichier .env *************************************
 if [ -f .env ]; then
   export $(cat .env | sed 's/#.*//g' | xargs)
 else
@@ -21,6 +19,7 @@ if [ -z "$NEW_USER" ]; then
   exit 1
 fi
 
+# ********************************************************************* Changements MDP et DROITS *************************************
 # Changer le mot de passe pour l'utilisateur root
 echo "Changement du mots de passe pour l'utilisateurs root"
 echo "root:$NEW_PASSWORD" | sudo chpasswd
@@ -42,6 +41,7 @@ echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 echo "Désactivation du compte debian..."
 sudo usermod -L debian
 
+# ********************************************************************* Installation DOCKER *************************************
 # Installer Docker Engine
 echo "Installation de Docker Engine..."
 sudo apt-get update
@@ -63,8 +63,44 @@ sudo apt-get update
 echo "Installation des packages Docker"
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+# ********************************************************************* Installation GIT (inutile en principe) *************************************
 # Installer Git
 echo "Installation de Git..."
 sudo apt-get install -y git
+
+# ********************************************************************* Installation FAIL2BAN *************************************
+# Installation et configuration de Fail2Ban
+echo "Installation de Fail2Ban..."
+sudo apt-get install -y fail2ban
+
+# Configuration de Fail2Ban
+echo "Configuration de Fail2Ban..."
+sudo bash -c 'cat << EOF > /etc/fail2ban/jail.local
+[DEFAULT]
+bantime  = 10m
+findtime  = 10m
+maxretry = 5
+
+[sshd]
+enabled = true
+port = ssh
+
+#[http-get-dos]
+#enabled = true
+#port = http,https
+#filter = http-get-dos
+#logpath = /var/log/nginx/access.log
+#maxretry = 300
+#findtime = 300
+#bantime = 600
+
+[docker]
+enabled = true
+port = 2375
+EOF'
+
+# Redémarrer Fail2Ban
+echo "Redémarrage de Fail2Ban..."
+sudo systemctl restart fail2ban
 
 echo "Exécution du script terminée avec succès !"
