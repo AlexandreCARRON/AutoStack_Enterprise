@@ -1,6 +1,7 @@
 Projet en cours, Readme à rédiger
 
 <h1>Disclaimer</h1>
+
 Bienvenue sur ce méga repo de ouf qui tue sa maman !! 
 
 Mouai... C'est en cours de dev, et je n'ai pas beaucoup de bande passante à consacrer à ce projet pour le moment, donc ça avance au fur et à mesure, et il y a encore pas mal de choses à améliorer ! 
@@ -22,6 +23,13 @@ Voila fin du disclamer : Pour ton infra, je m'occupe de rien, tu s'occupe de tou
 Bisous Merci Bisous !
 
 <h1>Pré-paramétrage</h1>
+
+<h2>pré-paramétrage à la mano (très light)</h2>
+
+Installer docker engine : <link>https://docs.docker.com/engine/install/</link>
+
+Installer git : <code>sudo apt install git</code>
+
 <h2>pré-paramétrage automatisé via script</h2>
 Se logguer sur votre serveur fraichement installé.
 Créer les fichiers suivants sur le serveur host et copier coller le contenu des fichiers depuis le repo Git. 
@@ -33,13 +41,6 @@ Rendez exécutable le fichier script.sh : <code>sudo chmod +x script.sh</code>
 Executez ensuite le script : <code>./script.sh</code>
 
 <h3>VOILA ! /!\ NE PAS OUBLIER DE SUPPRIMER LES 2 FICHIERS CREES POUR UN MINIMUM DE SECURITE /!\</h3>
-
-<h2>pré-paramétrage à la mano (très light)</h2>
-
-Installer docker engine : <link>https://docs.docker.com/engine/install/</link>
-
-Installer git : <code>sudo apt install git</code>
-
 
 
 
@@ -56,6 +57,7 @@ En non verbeux pour pouvoir utiliser le shell ensuite (le -d s'ignifie daemon =>
 <code> sudo docker-compose up -d </code>
 
 <h1>Sécurité</h1>
+
 <h2>Gestion des mots de passe</h2> 
 /!\ Attention à bien changer les mots de passe dans le fichier docker-compose.yml ET dans le odoo.conf ET dans le .env (a terme plus de mdp dans docker-compose.yml) !!! /!\
 <h2>Gestion des ports</h2>
@@ -65,6 +67,7 @@ Mais ce repo est public, donc des petits malins peuvent peut être connaitre vos
 Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faite un docker compose down, éditez le fichier docker-compose.yml, puis relancez. Sorry pour les manips, mais console toi en te disans que c'est le métier qui rentre jeune padawan !
 
 <h1>Commandes utiles</h1>
+
 En principe, avant de tapper les commandes, vous avez mis votre utilisateur dans les sudoers, donc le sudo en début de commande n'est pas nécessaire...
 <h2>liste des containers UP</h2>
 <code>sudo docker ps</code>
@@ -76,6 +79,7 @@ En principe, avant de tapper les commandes, vous avez mis votre utilisateur dans
 <code>sudo docker exec <container_id> cat /path/to/file</code>
 
 <h1>Licence</h1>
+
 Ce contenu est en licence GNU GPLv3, il peut être réutilisé comme bon vous semble, c'est cadeau ! Détails dans le fichier de licence.
 
 Petite pub discrète de fin pour que je puisse bouffer :  https://alexandrecarron.fr ! Enjoy !
