@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Vérifier si au moins un argument est passé
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 service1 service2 ..."
+    exit 1
+fi
+
+# Commencer à générer le fichier docker-compose.yml
+> docker-compose.yml
+echo "services:" >> docker-compose.yml
+
+# Boucler sur chaque service fourni en argument
+for service in "$@"
+do
+    service_dir="./services/$service"
+    if [ -d "$service_dir" ]; then
+        # Inclure le fichier docker-compose.yml du service
+        service_compose_file="$service_dir/docker-compose.yml"
+        if [ -f "$service_compose_file" ]; then
+            echo "  #******************************** $service ************************************" >> docker-compose.yml
+            # Lire le contenu du fichier docker-compose du service et l'ajouter au fichier principal
+            sed 's/^/  /' "$service_compose_file" >> docker-compose.yml
+            echo "" >> docker-compose.yml
+        else
+            echo "Le fichier $service_compose_file n'existe pas."
+        fi
+    else
+        echo "Le dossier $service_dir n'existe pas."
+    fi
+done
+
+echo "Fichier docker-compose.yml généré avec succès !"
