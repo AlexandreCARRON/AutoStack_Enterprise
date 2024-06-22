@@ -108,4 +108,35 @@ sudo systemctl restart fail2ban
 echo "### Vérification de l'état du service Fail2ban après redémarrage"
 sudo systemctl status fail2ban
 
+# Avertissement et redémarrage du système
+
 echo "######### Fin de l'éxécution du script de paramétrage automatique #########"
+echo "######### ATTENTION: LE SERVEUR VAS MAINTENANT SUBIR UN REBOOT. #########"
+echo "Assurez-vous de bien connaître le nom de votre nouvel utilisateur et son mot de passe, car l'utilisateur via lequel vous êtes actuellement connecté a été désactivé."
+read -p "USER - Voulez-vous afficher le nom du nouvel utilisateur que vous venez de créer ? (Y/n) " response
+response=${response,,} # Convertir en minuscule
+
+if [[ "$response" == "y" || -z "$response" ]]; then
+    echo "User : $NEW_USER"
+else
+    
+fi
+
+read -p "PASSWD - Voulez-vous afficher le mot de passe du nouvel utilisateur que vous venez de créer ? (Y/n) " response
+response=${response,,} # Convertir en minuscule
+
+if [[ "$response" == "y" || -z "$response" ]]; then
+    echo "Passwd : $NEW_PASSWORD"
+else
+    
+fi
+
+read -p "REBOOT - Voulez-vous bien redémarrer le système maintenant ? (Y/n) " response
+response=${response,,} # Convertir en minuscule
+
+if [[ "$response" == "y" || -z "$response" ]]; then
+    echo "Redémarrage du système..."
+    sudo reboot
+else
+    echo "Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. Si vous continuez à travailler sans redémarrer, vos fichiers se trouverons dans le /home de l'utilisateur actuel et non pas dans celui du nouveau !!! Bonchance !"
+fi
