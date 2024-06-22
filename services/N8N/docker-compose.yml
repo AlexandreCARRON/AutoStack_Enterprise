@@ -1,0 +1,43 @@
+  #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
+
+  postgres_n8n:                      #BDD posgreSQL liée à l'application N8N
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - POSTGRES_NON_ROOT_USER
+      - POSTGRES_NON_ROOT_PASSWORD
+    volumes:
+      - ./volumes/n8n/db_storage:/var/lib/postgresql/data
+      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    ports:
+      - '22032:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:                               #Outil puissant d'automatisation via API. Equivalent "Make" en autohébergé. Ici installé sans cloisonner les workers (à cloisonner si grande quantités à traiter)
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres_n8n
+      - DB_POSTGRESDB_PORT=5432             # attention a verifier conflit avec odoo postgres (FAIL 22032)
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+      - N8N_SECURE_COOKIE=false               # A ENLEVER, mis uniquement pour faire les premiers tests !
+    ports:
+      - 22078:5678
+    links:
+      - postgres_n8n
+    volumes:
+      - ./volumes/n8n/n8n_storage:/home/node/.n8n
+    depends_on:
+      postgres_n8n:
+        condition: service_healthy
+    user: "root:root"    #attention a vérifier coté sécurité... ajouté suite à u prb de droits sur le dossier n8n_storage. Peut probablemen être géré via ligne "entrypoint"
