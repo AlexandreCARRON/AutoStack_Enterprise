@@ -16,6 +16,7 @@ Voici à date les améliorations à venir que j'envisage à court terme :
 - Suppression des dossiers et fichiers (fake.md notamment) inutiles
 - Pondre une fucking doc digne de ce nom
 - Passer par les bons tuyaux pour faire mon backlog !!!
+- Trouver un nom plus adapté pour le repo : EnterpriseAutoStack ??
 
 Je suis preneur de toute aide autour de ce projet. En gros, l'idée est de faire une stack facile à mettre en place pour qu'on puisse aider les startups de notre Startup Nation (Youhou !), ou autres projets à impact, à avoir des outils efficients et peu coûteux pour qu'ils puissent tester leurs idées et scaler rapidement (je me fais presque peur avec mon vocabulaire !). Bref ! En vrai, je m'amuse à faire un projet qui, je l'espère, servira à d'autres pour gagner du temps sur leurs déploiements sans trop dépenser d'argent !
 
@@ -37,13 +38,13 @@ Bisous Merci Bisous !
 3. Rendez exécutable le fichier script.sh : `sudo chmod +x script.sh`
 4. Exécutez ensuite le script : `./script.sh`
 
-#### VOILA ! /!\ ATTENTION, le script vous déconnecte de la session SSH en cours, vous ne pourrez plus vous logguer en ssh avec l'ancien utilisateur /!\
-
 ## Déploiement de l'infra
 
 Réimportez le repo depuis votre nouvel utilisateur : `sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git`
 
-Se rendre dans le dossier copié : `cellelatulatrouvetoutseulnonmais!`
+Se rendre dans le dossier copié : `cellelatulatrouvetoutseulhein!`
+
+Afin de générer un fichier docker-compose.yml 
 
 Pour le premier déploiement histoire de vérifier que tout se passe bien : 
 
