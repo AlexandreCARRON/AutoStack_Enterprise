@@ -1,0 +1,14 @@
+  #******************************** JENKINS ****************************************************************************************************
+
+  jenkins:                              # Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
+    image: jenkins/jenkins:lts
+    privileged: true
+    user: root
+    ports:
+      - '22080:8080' # port pour taper l'interface de management
+      - '22005:50000'
+    container_name: jenkins
+    volumes:
+      - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
+      - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
