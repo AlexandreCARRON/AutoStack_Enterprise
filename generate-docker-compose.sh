@@ -1,5 +1,16 @@
 #!/bin/bash
 
+##############################################################################################################################
+### MANUEL ###
+#Ce fichier permet de générer le fichier docker-compose.yml en appelant les services contenus dans ./services/NOMDUSERVICE
+#Il doit être executable sur le serveur. Commande "sudo chmdo +x generate-docker-compose.sh"
+#Executer en ajoutant en arguments les noms des dossiers. 
+#Exemple : "sudo ./generate-docker-compose.sh Portainer Odoo ServiceX"
+
+###Une fois le fichier généré, vous pouvez executer votre "sudo docker compose up" de manière classique ###
+
+##############################################################################################################################
+
 # Vérifier si au moins un argument est passé
 if [ "$#" -lt 1 ]; then
     echo "Usage: $0 service1 service2 ..."
@@ -23,7 +34,7 @@ do
             sed 's/^/  /' "$service_compose_file" >> docker-compose.yml
             echo "" >> docker-compose.yml
         else
-            echo "Le fichier $service_compose_file n'existe pas."
+            echo "Le fichier $service_compose_file n'existe pas bien que le dossier $service_dir ait été trouvé. "
         fi
     else
         echo "Le dossier $service_dir n'existe pas."
