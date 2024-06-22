@@ -1,0 +1,10 @@
+service:
+  
+  #******************************** WEB-CHECK ****************************************************************************************************
+
+  web-check:                          # Petite appli sympa pour checker la sécurité de sites web
+    container_name: Web-Check
+    image: lissy93/web-check
+    ports:
+      - 22003:3000
+    restart: unless-stopped
