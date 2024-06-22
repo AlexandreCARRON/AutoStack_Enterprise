@@ -1,5 +1,3 @@
-services:
-
   #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
   
   nginx-proxy-manager:  # principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
