@@ -37,6 +37,15 @@ sudo usermod -aG docker $NEW_USER
 # Accorder des privilèges root au nouvel utilisateur
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
+# Remplacer le contenu du .bashrc du nouvel utilisateur
+if [ -f ./host/.bashrc ]; then
+  sudo cp ./host/.bashrc /home/$NEW_USER/.bashrc
+  sudo chown $NEW_USER:$NEW_USER /home/$NEW_USER/.bashrc
+  echo "### Fichier .bashrc copié dans /home/$NEW_USER/.bashrc"
+else
+  echo "########## Fichier .bashrc introuvable dans ./host"
+fi
+
 # Désactiver le compte debian
 echo "### Désactivation du compte debian..."
 sudo usermod -L debian
@@ -96,7 +105,7 @@ echo "### Les paramètre spécifiques de surveillance de protocols ont été imp
 echo "### Vérification de la configuration de Fail2Ban..."
 sudo fail2ban-client -d
 if [ $? -ne 0 ]; then
-  echo "Erreur dans la configuration de Fail2Ban. Veuillez vérifier le fichier /etc/fail2ban/jail.local."
+  echo "##################### Erreur dans la configuration de Fail2Ban. Veuillez vérifier le fichier /etc/fail2ban/jail.local."
   exit 1
 fi
 
@@ -131,12 +140,12 @@ else
     
 fi
 
-read -p "REBOOT - Voulez-vous bien redémarrer le système maintenant ? (Y/n) " response
+read -p "REBOOT - Etes-vous ok pour redémarrer le serveur maintenant ? (Y/n) " response
 response=${response,,} # Convertir en minuscule
 
 if [[ "$response" == "y" || -z "$response" ]]; then
     echo "Redémarrage du système..."
     sudo reboot
 else
-    echo "Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. Si vous continuez à travailler sans redémarrer, vos fichiers se trouverons dans le /home de l'utilisateur actuel et non pas dans celui du nouveau !!! Bonchance !"
+    echo "############## Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. /!\ Si vous continuez à travailler sans redémarrer, vos fichiers se trouverons dans le /home de l'utilisateur actuel et non pas dans celui du nouveau !!! /!\ "
 fi
