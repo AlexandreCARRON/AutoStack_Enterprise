@@ -23,7 +23,7 @@ Voilà fin du disclaimer : Pour ton infra, je m'occupe de rien, tu t'occupes de 
 
 Bisous Merci Bisous !
 
-## Pré-paramétrage du serveur host
+## Pré-paramétrage du serveur HOST
 
 ### Pré-paramétrage à la mano (très light)
 
@@ -33,19 +33,15 @@ Bisous Merci Bisous !
 ### Pré-paramétrage automatisé via script
 
 1. Se logguer sur votre serveur fraîchement installé.
-2. Créer les fichiers suivants sur le serveur host et copier-coller le contenu des fichiers depuis le repo Git. 
-
-- Copiez le contenu trouvé dans ./script-conf-server-D12.sh dans ce fichier : `sudo nano script.sh`
-- Copiez les lignes relatives à CONFIG SERVEUR du fichier ./.env dans ce fichier : `sudo nano .env`
-
+2. Copiez le contenu de ce repo sur votre serveur : <code>sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git</code>
 3. Rendez exécutable le fichier script.sh : `sudo chmod +x script.sh`
 4. Exécutez ensuite le script : `./script.sh`
 
-#### VOILA ! /!\ NE PAS OUBLIER DE SUPPRIMER LES 2 FICHIERS CRÉÉS POUR UN MINIMUM DE SÉCURITÉ /!\
+#### VOILA ! /!\ ATTENTION, le script vous déconnecte de la session SSH en cours, vous ne pourrez plus vous logguer en ssh avec l'ancien utilisateur /!\
 
 ## Déploiement de l'infra
 
-Importer le repo : `sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git`
+Réimportez le repo depuis votre nouvel utilisateur : `sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git`
 
 Se rendre dans le dossier copié : `cellelatulatrouvetoutseulnonmais!`
 
