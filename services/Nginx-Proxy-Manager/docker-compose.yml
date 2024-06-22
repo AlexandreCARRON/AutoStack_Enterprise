@@ -1,0 +1,16 @@
+service:
+
+  #******************************** NGINX-PROXY-MANAGER ****************************************************************************************************
+  
+  nginx-proxy-manager:  # principal intérêt rediriger vers un port exotique + automatiser demande certificat pour https
+    image: 'docker.io/jc21/nginx-proxy-manager:latest'
+    ports:
+      - '80:80'
+      - '22081:81' # port pour taper l'interface de management
+      - '443:443'
+    volumes:
+      - ./volumes/Nginx-proxy-manager/data:/data
+      - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+#      - ./volumes/Nginx-proxy-manager/etc/nginx.conf.d:/etc/nginx/conf.d  #problème de droits en écriture, ne pas utiliser tel quel
+#      - ./volumes/Nginx-proxy-manager/logs:/run/uncaught-logs/current     #idem
+    restart: unless-stopped
