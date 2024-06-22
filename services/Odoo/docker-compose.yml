@@ -1,6 +1,6 @@
   #******************************** ODOO ****************************************************************************************************
 
-  db:                                #base de donnée PostgreSQL de l'application Odoo
+  postgres-odoo:                                #base de donnée PostgreSQL de l'application Odoo       #ATTENTION changement à vérifier. ex db
     image: postgres:16
     user: root
     environment:
@@ -16,14 +16,14 @@
     image: odoo:17
     user: root
     depends_on:
-      - db
+      - postgres-odoo       #ATTENTION changement à vérifier. ex db
     ports:
       - "22017:8069" # port pour taper l'interface de management
       - "22018:8072" # live chat
     tty: true
     command: --
     environment:
-      - HOST=db
+      - HOST=postgres-odoo       #ATTENTION changement à vérifier. ex db
       - USER=odoo_client
       - PASSWORD=changemeoryouilldie
     volumes:
