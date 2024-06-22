@@ -1,5 +1,3 @@
-services:
-
   #******************************** PORTAINER ****************************************************************************************************
 
   portainer:  # Permet de visualiser et gérer vos conteneurs et volumes via une interface web simplifiée
