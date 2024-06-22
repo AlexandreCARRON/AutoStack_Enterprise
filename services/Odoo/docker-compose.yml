@@ -1,0 +1,35 @@
+services:
+
+  #******************************** ODOO ****************************************************************************************************
+
+  db:                                #base de donnée PostgreSQL de l'application Odoo
+    image: postgres:16
+    user: root
+    environment:
+      - POSTGRES_USER=odoo_client
+      - POSTGRES_PASSWORD=changemeoryouilldie
+      - POSTGRES_DB=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    restart: always
+    volumes:
+      - ./volumes/postgresql/data:/var/lib/postgresql/data
+
+  odoo17:                           # Application Wordpress Like, en bien plus solide et sécurisé, et permettant de déployer ERP / CRM / outil RH / outil Marketing automation (UTM) / outil E-Learning / etc.
+    image: odoo:17
+    user: root
+    depends_on:
+      - db
+    ports:
+      - "22017:8069" # port pour taper l'interface de management
+      - "22018:8072" # live chat
+    tty: true
+    command: --
+    environment:
+      - HOST=db
+      - USER=odoo_client
+      - PASSWORD=changemeoryouilldie
+    volumes:
+      - ./volumes/Odoo/odoo-web-data-client:/var/lib/odoo
+      - ./volumes/Odoo/addons:/mnt/extra-addons
+      - ./volumes/Odoo/etc:/etc/odoo
+    restart: always
