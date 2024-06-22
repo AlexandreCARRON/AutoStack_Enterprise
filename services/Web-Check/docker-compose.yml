@@ -1,5 +1,3 @@
-services:
-  
   #******************************** WEB-CHECK ****************************************************************************************************
 
   web-check:                          # Petite appli sympa pour checker la sécurité de sites web
