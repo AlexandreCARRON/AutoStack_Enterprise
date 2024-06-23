@@ -6,5 +6,5 @@
     volumes:
       - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
     ports:
-      - "22031:3001"
+      - "${PORT_MNGT_KUMA}:3001"
     restart: unless-stopped
