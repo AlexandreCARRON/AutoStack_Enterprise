@@ -36,9 +36,6 @@ do
         else
             echo "Le fichier $service_compose_file n'existe pas bien que le dossier $service_dir ait été trouvé. "
         fi
-    else
-        echo "Le dossier $service_dir n'existe pas."
-    fi
 
         # Inclure le fichier .env du service
         service_env_file="$service_dir/.env"
