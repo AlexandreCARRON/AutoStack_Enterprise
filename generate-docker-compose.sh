@@ -29,7 +29,6 @@ do
         # Inclure le fichier docker-compose.yml du service
         service_compose_file="$service_dir/docker-compose.yml"
         if [ -f "$service_compose_file" ]; then
-            echo "  #******************************** $service ************************************" >> docker-compose.yml
             # Lire le contenu du fichier docker-compose du service et l'ajouter au fichier principal
             sed 's/^/  /' "$service_compose_file" >> docker-compose.yml
             echo "" >> docker-compose.yml
@@ -41,9 +40,7 @@ do
         service_env_file="$service_dir/.env"
         if [ -f "$service_env_file" ]; then
             echo "" >> .env
-            echo "# Variables pour $service" >> .env
             cat "$service_env_file" >> .env
-            echo "" >> .env
         else
             echo "Le fichier $service_env_file n'existe pas bien que le dossier $service_dir ait été trouvé."
         fi
