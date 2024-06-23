@@ -13,7 +13,7 @@
       - ./volumes/n8n/db_storage:/var/lib/postgresql/data
       - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
     ports:
-      - '${PORT_N8N}:5432'
+      - '${PORT_DB_N8N}:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
@@ -32,7 +32,7 @@
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
       - N8N_SECURE_COOKIE=false               # A ENLEVER, mis uniquement pour faire les premiers tests !
     ports:
-      - 22078:5678
+      - ${PORT_N8N}:5678
     links:
       - postgres_n8n
     volumes:
