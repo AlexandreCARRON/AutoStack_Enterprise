@@ -4,10 +4,10 @@
     image: postgres:16
     user: root
     environment:
-      - POSTGRES_USER=odoo_client
-      - POSTGRES_PASSWORD=changemeoryouilldie
-      - POSTGRES_DB=postgres
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_USER=${POSTGRES_USER_ODOO}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_ODOO}
+      - POSTGRES_DB=${POSTGRES_DB_ODOO}
+      - PGDATA=${PGDATA_ODOO}
     restart: always
     volumes:
       - ./volumes/postgresql/data:/var/lib/postgresql/data
@@ -18,14 +18,14 @@
     depends_on:
       - postgres-odoo       #ATTENTION changement à vérifier. ex db
     ports:
-      - "22017:8069" # port pour taper l'interface de management
-      - "22018:8072" # live chat
+      - "${PORT_MNGT_ODOO}:8069" # port pour taper l'interface de management
+      - "${PORT_LIVECHAT_ODOO}:8072" # live chat
     tty: true
     command: --
     environment:
-      - HOST=postgres-odoo       #ATTENTION changement à vérifier. ex db
-      - USER=odoo_client
-      - PASSWORD=changemeoryouilldie
+      - HOST=${HOST_ODOO}       #ATTENTION changement à vérifier. ex db
+      - USER=${USER_ODOO}
+      - PASSWORD=${PASSWORD_ODOO}
     volumes:
       - ./volumes/Odoo/odoo-web-data-client:/var/lib/odoo
       - ./volumes/Odoo/addons:/mnt/extra-addons
