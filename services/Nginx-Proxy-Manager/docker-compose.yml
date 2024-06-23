@@ -5,7 +5,7 @@
     image: 'docker.io/jc21/nginx-proxy-manager:latest'
     ports:
       - '80:80'
-      - '22081:81' # port pour taper l'interface de management
+      - '${PORT_NGINX_PROXY_MANAGER}:81' # port pour taper l'interface de management
       - '443:443'
     volumes:
       - ./volumes/Nginx-proxy-manager/data:/data
