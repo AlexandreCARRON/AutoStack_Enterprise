@@ -5,8 +5,8 @@
     privileged: true
     user: root
     ports:
-      - '22080:8080' # port pour taper l'interface de management
-      - '22005:50000'
+      - '${MNGT_PORT_JENKINS}:8080' # port pour taper l'interface de management
+      - '${TCP_AGENT_LISTENER_JENKINS}:50000'
     container_name: jenkins
     volumes:
       - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
