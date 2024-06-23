@@ -5,7 +5,7 @@
     container_name: portainer
     command: -H unix:///var/run/docker.sock  # obligatoire pour lier portainer à docker en local sur la machine
     ports:
-      - "22090:9443" # port pour taper l'interface de management
+      - "${PORT_MNGT_PORTAINER}:9443" # port pour taper l'interface de management
     volumes:
       - ./volumes/Portainer/data:/data
       - /var/run/docker.sock:/var/run/docker.sock   #lie le docker.sock de l'hote au docker.sock du container. Permet à Portainer de voir la conf docker de l'hote
