@@ -2,12 +2,12 @@
 
 ##############################################################################################################################
 ### MANUEL ###
-#Ce fichier permet de générer le fichier docker-compose.yml en appelant les services contenus dans ./services/NOMDUSERVICE
+#Ce fichier permet de générer le fichier docker-compose.yml et .env en appelant les services contenus dans ./services/NOMDUSERVICE
 #Il doit être executable sur le serveur. Commande "sudo chmdo +x generate-docker-compose.sh"
 #Executer en ajoutant en arguments les noms des dossiers. 
 #Exemple : "sudo ./generate-docker-compose.sh Portainer Odoo ServiceX"
 
-###Une fois le fichier généré, vous pouvez executer votre "sudo docker compose up" de manière classique ###
+###Une fois le fichier généré, personnalisez le .env généré, et vous pouvez executer votre "sudo docker compose up" de manière classique ###
 
 ##############################################################################################################################
 
@@ -35,6 +35,20 @@ do
             echo "" >> docker-compose.yml
         else
             echo "Le fichier $service_compose_file n'existe pas bien que le dossier $service_dir ait été trouvé. "
+        fi
+    else
+        echo "Le dossier $service_dir n'existe pas."
+    fi
+
+        # Inclure le fichier .env du service
+        service_env_file="$service_dir/.env"
+        if [ -f "$service_env_file" ]; then
+            echo "" >> .env
+            echo "# Variables pour $service" >> .env
+            cat "$service_env_file" >> .env
+            echo "" >> .env
+        else
+            echo "Le fichier $service_env_file n'existe pas bien que le dossier $service_dir ait été trouvé."
         fi
     else
         echo "Le dossier $service_dir n'existe pas."
