@@ -13,7 +13,7 @@
       - ./volumes/n8n/db_storage:/var/lib/postgresql/data
       - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
     ports:
-      - '22032:5432'
+      - '${PORT_N8N}:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
