@@ -44,7 +44,9 @@ Réimportez le repo depuis votre nouvel utilisateur : `sudo git clone https://gi
 
 Se rendre dans le dossier copié : `cellelatulatrouvetoutseulhein!`
 
-Afin de générer un fichier docker-compose.yml 
+Afin de générer un fichier docker-compose.yml avec uniquement les services qui vous interessent, executez generator-docker-compose.sh en mettant en argument les noms de dossiers des différents services à déployer : 
+Rendre éxécutable le fichier : <code>sudo chmod +x generator-docker-compose.sh</code>
+Executer avec les bons arguments : <code>./generator-docker-compose.sh <NomService1> <NomService2> </code>
 
 Pour le premier déploiement histoire de vérifier que tout se passe bien : 
 
@@ -58,7 +60,7 @@ En non verbeux pour pouvoir utiliser le shell ensuite (le `-d` signifie daemon =
 
 ### Gestion des mots de passe
 
-/!\ Attention à bien changer les mots de passe dans le fichier `docker-compose.yml` ET dans le `odoo.conf` ET dans le .env (à terme plus de mdp dans `docker-compose.yml`) !!! /!\
+/!\ Attention à bien changer les mots de passe et ports dans le fichier généré `docker-compose.yml` ET dans le `odoo.conf` ET dans le .env (à terme plus de mdp dans `docker-compose.yml`, et fichier .dev généré automatiquement en fonction sevices à déployer) !!! /!\
 
 ### Gestion des ports
 
