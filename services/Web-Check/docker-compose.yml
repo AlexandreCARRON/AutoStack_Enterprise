@@ -4,5 +4,5 @@
     container_name: Web-Check
     image: lissy93/web-check
     ports:
-      - 22003:3000
+      - '${PORT_WEBCHECK}:3000'
     restart: unless-stopped
