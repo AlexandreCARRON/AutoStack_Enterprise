@@ -46,7 +46,9 @@ Se rendre dans le dossier copié : `cellelatulatrouvetoutseulhein!`
 
 Afin de générer un fichier docker-compose.yml avec uniquement les services qui vous interessent, executez generator-docker-compose.sh en mettant en argument les noms de dossiers des différents services à déployer : 
 Rendre éxécutable le fichier : <code>sudo chmod +x generator-docker-compose.sh</code>
-Executer avec les bons arguments : <code>./generator-docker-compose.sh <NomService1> <NomService2> </code>
+Executer avec les bons arguments : <code>./generator-docker-compose.sh NomService1 NomService2 </code>
+
+Vous pouvez maintenant aller éditer le fichier .env généré pour personnaliser les ports et mots de passes : <code>sudo nano .env</code>
 
 Pour le premier déploiement histoire de vérifier que tout se passe bien : 
 
