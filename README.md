@@ -73,8 +73,6 @@ Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si j
 
 ## Commandes utiles
 
-En principe, avant de taper les commandes, vous avez mis votre utilisateur dans les sudoers, donc le sudo en début de commande n'est pas nécessaire...
-
 ### Liste des containers UP
 `sudo docker ps`
 
