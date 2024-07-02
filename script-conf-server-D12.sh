@@ -121,7 +121,9 @@ sudo systemctl status fail2ban
 
 echo "######### Fin de l'éxécution du script de paramétrage automatique #########"
 echo "######### ATTENTION: LE SERVEUR VAS MAINTENANT SUBIR UN REBOOT. #########"
-echo "Assurez-vous de bien connaître le nom de votre nouvel utilisateur et son mot de passe, car l'utilisateur via lequel vous êtes actuellement connecté a été>read -p "USER - Voulez-vous afficher le nom du nouvel utilisateur que vous venez de créer ? (Y/n) " response
+echo "Assurez-vous de bien connaître le nom de votre nouvel utilisateur et son mot de passe, car l'utilisateur via lequel vous êtes actuellement connecté a été désactivé"
+
+read -p "USER - Voulez-vous afficher le nom du nouvel utilisateur que vous venez de créer ? (Y/n) " response
 response=${response,,} # Convertir en minuscule
 
 if [[ "$response" == "y" || -z "$response" ]]; then
