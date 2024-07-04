@@ -34,8 +34,9 @@ Bisous Merci Bisous !
 
 1. Se logguer sur votre serveur fraîchement installé.
 2. Copiez le contenu de ce repo sur votre serveur : <code>sudo git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git</code>
-3. Rendez exécutable le fichier script.sh : `sudo chmod +x script.sh`
-4. Exécutez ensuite le script : `./script.sh`
+3. Modifiez le fichier .env pour y mettre le nom d'utilisateur et mdp que vous souhaitez : <code>sudo nano .env</code>
+4. Rendez exécutable le fichier script.sh : `sudo chmod +x script-conf-server-D12.sh`
+5. Exécutez ensuite le script : `./script-conf-server-D12.sh`
 
 ## Déploiement de l'infra
 
