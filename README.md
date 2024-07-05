@@ -55,11 +55,11 @@ Vous pouvez maintenant aller éditer le fichier .env généré pour personnalise
 
 Pour le premier déploiement histoire de vérifier que tout se passe bien : 
 
-`sudo docker-compose up`
+`sudo docker compose up`
 
 En non verbeux pour pouvoir utiliser le shell ensuite (le `-d` signifie daemon => s'exécute en arrière-plan)
 
-`sudo docker-compose up -d`
+`sudo docker compose up -d`
 
 ## Sécurité
 
