@@ -39,6 +39,8 @@ Bisous Merci Bisous !
 5. Rendez exécutable le fichier script.sh : `sudo chmod +x script-conf-server-D12.sh`
 6. Exécutez ensuite le script : `./script-conf-server-D12.sh`
 
+  /!\ ATTENTION /!\ : Votre port SSH de connexion a été modifié selon la variable dans .env !! Si vous ne l'avez pas modifiée, vous pouvez maintenant taper <code>ssh toto@IPouDNS -p 22022</code>
+
 ## Déploiement de l'infra
 
 Réimportez le repo depuis votre nouvel utilisateur : `sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git`
