@@ -61,15 +61,12 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 cp $SSHD_CONFIG $SSHD_CONFIG.bak
 
 # Modifier ou ajouter la ligne Port dans le fichier sshd_config
-if sudo grep -q "^#Port 22" $SSHD_CONFIG; then
-    # Si la ligne est commentée, la décommenter et changer le port
-    sudo sed -i "s/^#Port 22/Port $NEW_PORT_SSH/" $SSHD_CONFIG
-elif sudo grep -q "^Port " $SSHD_CONFIG; then
+if sudo grep -q "^Port " $SSHD_CONFIG; then
     # Si une ligne Port existe déjà, la remplacer par la nouvelle
     sudo sed -i "s/^Port .*/Port $NEW_PORT_SSH/" $SSHD_CONFIG
 else
     # Si aucune ligne Port n'existe, ajouter la nouvelle ligne à la fin du fichier
-    echo "Port $NEW_PORT_SSH" >> $SSHD_CONFIG
+     echo "Port $NEW_PORT_SSH" | sudo tee -a $SSHD_CONFIG
 fi
 
 # Redémarrer le service SSH pour appliquer les modifications
