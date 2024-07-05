@@ -94,7 +94,7 @@ sudo apt-get update
 
 # Installation des packages Docker
 echo "######### Installation des packages Docker"
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # ********************************************************************* Installation GIT (inutile en principe) *************************************
 # Installer Git
