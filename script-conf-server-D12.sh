@@ -146,6 +146,6 @@ response=${response,,} # Convertir en minuscule
 
 if [[ "$response" == "y" || -z "$response" ]]; then
     echo "Redémarrage du système..."
-    sudo reboot
+    sudo reboot now
 else
-    echo "############## Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. /!\ Si vous continuez à travailler sans redémarrer, vos fichiers se>fi
+    echo "############## Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. ################"
