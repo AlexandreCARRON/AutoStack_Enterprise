@@ -158,9 +158,15 @@ read -p "=> REBOOT - Etes-vous ok pour redémarrer le serveur maintenant ? (Y/n)
 response=${response,,} # Convertir en minuscule
 
 if [[ "$response" == "y" || -z "$response" ]]; then
+    echo "###### Suppression de l'ensemble des fichiers contenus dans /home/debian/[repo-précédement-chargé]"
+    sudo rm -rf /home/debian/AutoStack_Enterprise
+    echo "###### Copie du repo vierge vers le nouvel utilisateur"
+    cd /home/$NEW_USER
+    sudo git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git
     echo "###### Redémarrage du système..."
     sudo reboot now
 else
     echo "#################### Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. ################"
+    echo "#################### ATTENTION : votre fichier .env contenu dans /home/debian/.env n'a pas été supprimé, vos informations utilisateur et mdp sont donc disponibles en clair ! Pensez à le supprimer ! ################"
 
 fi
