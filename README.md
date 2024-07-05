@@ -88,6 +88,9 @@ Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si j
 ### Afficher contenu d'un fichier du container depuis machine hôte
 `sudo docker exec <container_id> cat /path/to/file`
 
+### Se connecter au shell à l'intérieur d'un container
+`sudo docker exec -it <id_container> bash`
+
 ## Licence
 
 Ce contenu est en licence GNU GPLv3, il peut être réutilisé comme bon vous semble, c'est cadeau ! Détails dans le fichier de licence.
