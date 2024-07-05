@@ -82,22 +82,9 @@ sudo apt-get install -y git
 echo "### Installation de Fail2Ban..."
 sudo apt-get install -y fail2ban
 
-# Configuration de Fail2Ban (à terme : fichier de conf à appeler via ./host/fail2ban/jail.conf)
+# Configuration de Fail2Ban via le fichier préparamétré disponible dans le repo
 echo "### Configuration de Fail2Ban..."
-sudo bash -c 'cat << EOF > /etc/fail2ban/jail.local
-[DEFAULT]
-bantime  = 10m
-findtime  = 10m
-maxretry = 5
-
-[sshd]
-enabled = true
-port = ssh
-
-[docker]
-enabled = true
-port = 2375
-EOF'
+sudo cp ./host/fail2ban/jail.local /etc/fail2ban/jail.local
 
 echo "### Les paramètre spécifiques de surveillance de protocols ont été implémentés."
 
