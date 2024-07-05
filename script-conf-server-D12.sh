@@ -165,3 +165,5 @@ if [[ "$response" == "y" || -z "$response" ]]; then
     sudo reboot now
 else
     echo "#################### Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. ################"
+
+fi
