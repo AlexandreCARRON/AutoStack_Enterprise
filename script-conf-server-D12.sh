@@ -85,8 +85,9 @@ sudo apt-get install -y fail2ban
 # Configuration de Fail2Ban via le fichier préparamétré disponible dans le repo
 echo "### Configuration de Fail2Ban..."
 sudo cp ./host/fail2ban/jail.local /etc/fail2ban/jail.local
+sudo service fail2ban restart
 
-echo "### Les paramètre spécifiques de surveillance de protocols ont été implémentés."
+echo "### Les paramètre spécifiques de surveillance de protocols ont été implémentés et le service a été redémarré."
 
 # Vérifier la configuration de Fail2Ban
 echo "### Vérification de la configuration de Fail2Ban..."
