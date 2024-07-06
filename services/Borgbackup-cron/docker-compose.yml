@@ -1,0 +1,27 @@
+#******************************** BorgBackup CRON ****************************************************************************************************
+
+# Non utilisable en l'état !  Fichier de conf à adapter à la stack
+  backup_cron:
+    image: ovski/borgbackup-cron:v1.0.0
+    volumes:
+      - data:/var/docker_volumes/nextcloud/app/data
+    environment:
+      SSH_CONNECTION: baptiste@172.17.0.1
+      PRIVATE_KEY_PATH: /run/secrets/backup_server_user_private_key
+      BORG_REPO_PATH: /home/baptiste/borg_repositories
+      BORG_REPO_NAME: nextcloud
+      LOCAL_FOLDER: /var/docker_volumes/nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_DATABASE: nextcloud
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      SSH_KNOWN_HOSTS: 172.17.0.1
+    secrets:
+      - backup_server_user_private_key
+      - borg_passphrase
+      - db_password
+
+secrets:
+  backup_server_user_private_key:
+    file: ./secret_backup_server_user_private_key.txt
+  borg_passphrase:
+    file: ./secret_borg_passphrase.txt
