@@ -11,6 +11,4 @@
     volumes:
       - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
       - ./volumes/jenkins/var/run/docker.sock:/var/run/docker.sock:ro
-      - ./volumes/jenkins/jenkins_logs:/var/log/jenkins
-      - ./volumes/jenkins/jenkins_config:/var/lib/jenkins/config
     restart: unless-stopped
