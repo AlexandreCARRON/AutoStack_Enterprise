@@ -22,6 +22,7 @@
       POSTGRES_DB: nextcloud
       POSTGRES_USER: nextcloud
       POSTGRES_PASSWORD: nextcloud
+      NEXTCLOUD_ADMIN_USER: nextcloud
 
 volumes:
   db_data:
