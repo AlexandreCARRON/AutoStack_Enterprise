@@ -1,0 +1,33 @@
+#***************************************************************NEXTCLOUD*******************************************************************
+
+  db_nextcloud:
+    image: postgres:16
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: nextcloud
+
+  nextcloud:
+    image: nextcloud:latest
+    restart: always
+    ports:
+      - 42280:80
+    volumes:
+      - ./volumes/Nextcloud/nextcloud:/var/www/html
+    environment:
+      POSTGRES_HOST: db_nextcloud
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: nextcloud
+
+volumes:
+  db_data:
+  nextcloud:
+
+networks:
+  cloud:
+    name: cloud
+    driver: bridge
