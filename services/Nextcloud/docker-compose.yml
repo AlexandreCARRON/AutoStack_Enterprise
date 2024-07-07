@@ -6,24 +6,23 @@
     volumes:
       - db_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: nextcloud
-      POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: nextcloud
+      POSTGRES_DB: ${POSTGRES_DB_NEXTCLOUD}
+      POSTGRES_USER: ${POSTGRES_USER_NEXTCLOUD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_NEXTCLOUD}
 
   nextcloud:
     image: nextcloud:latest
     restart: always
     ports:
-      - 42280:80
+      - ${NEXTCLOUD_PORT}:80
     volumes:
-      - ./volumes/Nextcloud/nextcloud:/var/www/html
+      - ./volumes/Nextcloud/nextcloud:/var/www/html  #attention ici on copie tous le dossier, peut vite grossir et double la taille dès qu'on ajoute des fichiers (répertoire data)
     environment:
-      POSTGRES_DB: nextcloud
-      POSTGRES_USER: nextcloud
-      POSTGRES_PASSWORD: nextcloud
-      NEXTCLOUD_ADMIN_USER: nextcloud
-      NEXTCLOUD_ADMIN_PASSWORD: nextcloud
-  # credential à utiliser lors de la première connexion, bien cliquer sur le bouton PostgreSQL et entrer : Database User: nextcloud / Database Password: nextcloud / Database Name: nextcloud / Database Host: db-nextcloud:5432
+      POSTGRES_DB: ${POSTGRES_DB_NEXTCLOUD}
+      POSTGRES_USER: ${POSTGRES_USER_NEXTCLOUD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_NEXTCLOUD}
+      NEXTCLOUD_ADMIN_USER: ${POSTGRES_ADMIN_USER_NEXTCLOUD}
+      NEXTCLOUD_ADMIN_PASSWORD: ${POSTGRES_ADMIN_PASSWORD_NEXTCLOUD}
 
 volumes:
   db_data:
