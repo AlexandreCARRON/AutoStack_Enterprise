@@ -99,7 +99,7 @@ sudo usermod -aG docker $NEW_USER
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
 # Autoriser l'accès en lecture au dossier des volumes persistants docker
-sudo chmod -R g+r /var/lib/docker/volumes   #attention autorise des groupes entiers
+#sudo chmod -R g+r /var/lib/docker/volumes   # NON FONCTIONNEL et #attention autorise des groupes entiers
 
 # Remplacer le contenu du .bashrc du nouvel utilisateur
 echo "######### Personnalisation .bashrc pour le nouvel utilisateur"
