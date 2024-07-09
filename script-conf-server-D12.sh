@@ -31,16 +31,26 @@ echo "### Changement du mots de passe pour l'utilisateurs $NEW_USER..."
 echo "$NEW_USER:$NEW_PASSWORD" | sudo chpasswd
 
 # Ajouter le nouvel utilisateur aux groupes sudo et docker (pour docker permet d'éviter à tapper 'sudo' avant la commande 'docker ps' par ex.
+echo "######### Ajout du nouvel utilisateur aux groupes sudo et docker"
 sudo usermod -aG sudo $NEW_USER
 sudo usermod -aG docker $NEW_USER
-
-# Autoriser l'accès en lecture au dossier des volumes persistants docker
-sudo chmod -R g+r /var/lib/docker/volumes
 
 # Eviter d'avoir à tapper le mot de passe lorsque le nouvel utilisateur utilise 'sudo'
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
+# Installez les utilitaires ACL (si ce n'est pas déjà fait)
+echo "######### Installation des ACL"
+sudo apt-get install acl -y
+
+# Ajoutez les permissions de lecture pour le nouvel utilisateur
+echo "######### Ajout des permission pour le nouvel utilisateur de lire /var/lib/docker/volumes"
+sudo setfacl -R -m u:$NEW_USER:r /var/lib/docker/volumes
+
+# Autoriser l'accès en lecture au dossier des volumes persistants docker
+# sudo chmod -R g+r /var/lib/docker/volumes   #attention autorise des groupes entiers
+
 # Remplacer le contenu du .bashrc du nouvel utilisateur
+echo "######### Personnalisation .bashrc pour le nouvel utilisateur"
 if [ -f ./host/.bashrc ]; then
   sudo cp ./host/.bashrc /home/$NEW_USER/.bashrc
   sudo chown $NEW_USER:$NEW_USER /home/$NEW_USER/.bashrc
@@ -75,7 +85,7 @@ fi
 # Redémarrer le service SSH pour appliquer les modifications
 sudo systemctl restart sshd
 
-echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré."
+echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH" !!
 
 # ********************************************************************* Installation DOCKER *************************************
 # Installer Docker Engine
@@ -96,7 +106,7 @@ echo \
 sudo apt-get update
 
 # Installation des packages Docker
-echo "######### Installation des packages Docker"
+echo "######### Installation des packages Docker : docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # ********************************************************************* Installation GIT (inutile en principe) *************************************
