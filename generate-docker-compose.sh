@@ -50,3 +50,4 @@ do
 done
 
 echo "Fichier docker-compose.yml généré avec succès !"
+echo "N'oubliez pas de modifier votre nouveau fichier .env avant de lancer le script !!"
