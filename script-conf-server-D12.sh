@@ -101,6 +101,11 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 echo "######### Installation de Git..."
 sudo apt-get install -y git
 
+# ********************************************************************* Installation htop *************************************
+# Installer htop
+echo "######### Installation de htop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
+sudo apt-get install -y htop
+
 # ********************************************************************* Installation FAIL2BAN *************************************
 # Installation et configuration de Fail2Ban
 echo "######### Installation de Fail2Ban..."
