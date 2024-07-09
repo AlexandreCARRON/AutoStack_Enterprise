@@ -98,16 +98,8 @@ sudo usermod -aG docker $NEW_USER
 # Eviter d'avoir à tapper le mot de passe lorsque le nouvel utilisateur utilise 'sudo'
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
-# Installez les utilitaires ACL (si ce n'est pas déjà fait)
-echo "######### Installation des ACL"
-sudo apt-get install acl -y
-
-# Ajoutez les permissions de lecture pour le nouvel utilisateur
-echo "######### Ajout des permission pour le nouvel utilisateur de lire /var/lib/docker/volumes"
-sudo setfacl -R -m u:$NEW_USER:r /var/lib/docker/volumes
-
 # Autoriser l'accès en lecture au dossier des volumes persistants docker
-# sudo chmod -R g+r /var/lib/docker/volumes   #attention autorise des groupes entiers
+sudo chmod -R g+r /var/lib/docker/volumes   #attention autorise des groupes entiers
 
 # Remplacer le contenu du .bashrc du nouvel utilisateur
 echo "######### Personnalisation .bashrc pour le nouvel utilisateur"
