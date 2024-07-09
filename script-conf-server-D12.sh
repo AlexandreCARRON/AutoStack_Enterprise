@@ -145,7 +145,7 @@ fi
 # Redémarrer le service SSH pour appliquer les modifications
 sudo systemctl restart sshd
 
-echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH !!"
+echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH" !!"
 
 # ********************************************************************* Avertissement et redémarrage du système *************************************
 
