@@ -30,11 +30,11 @@ sudo useradd -m -s /bin/bash $NEW_USER
 echo "### Changement du mots de passe pour l'utilisateurs $NEW_USER..."
 echo "$NEW_USER:$NEW_PASSWORD" | sudo chpasswd
 
-# Ajouter le nouvel utilisateur aux groupes sudo et docker
+# Ajouter le nouvel utilisateur aux groupes sudo et docker (pour docker permet d'éviter à tapper 'sudo' avant la commande 'docker ps' par ex.
 sudo usermod -aG sudo $NEW_USER
 sudo usermod -aG docker $NEW_USER
 
-# Accorder des privilèges root au nouvel utilisateur
+# Eviter d'avoir à tapper le mot de passe lorsque le nouvel utilisateur utilise 'sudo'
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
 # Remplacer le contenu du .bashrc du nouvel utilisateur
