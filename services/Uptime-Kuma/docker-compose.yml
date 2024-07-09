@@ -8,3 +8,5 @@
     ports:
       - "${PORT_MNGT_KUMA}:3001"
     restart: unless-stopped
+  volumes:
+    uptime-kuma-data:
