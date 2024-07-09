@@ -131,7 +131,7 @@ echo "######### Changement du port SSH pour accéder à la machine"
 SSHD_CONFIG="/etc/ssh/sshd_config"
 
 # Sauvegarder le fichier de configuration actuel
-cp $SSHD_CONFIG $SSHD_CONFIG.bak
+sudo cp $SSHD_CONFIG $SSHD_CONFIG.bak
 
 # Modifier ou ajouter la ligne Port dans le fichier sshd_config
 if sudo grep -q "^Port " $SSHD_CONFIG; then
@@ -145,10 +145,9 @@ fi
 # Redémarrer le service SSH pour appliquer les modifications
 sudo systemctl restart sshd
 
-echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH" !!
+echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH !!"
 
 # ********************************************************************* Avertissement et redémarrage du système *************************************
-
 
 echo "######### Fin de l'éxécution du script de paramétrage automatique #########"
 echo "######### ATTENTION: LE SERVEUR VAS MAINTENANT SUBIR UN REBOOT. #########"
