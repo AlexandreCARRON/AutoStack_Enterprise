@@ -34,6 +34,9 @@ echo "$NEW_USER:$NEW_PASSWORD" | sudo chpasswd
 sudo usermod -aG sudo $NEW_USER
 sudo usermod -aG docker $NEW_USER
 
+# Autoriser l'accès en lecture au dossier des volumes persistants docker
+sudo chmod -R g+r /var/lib/docker/volumes
+
 # Eviter d'avoir à tapper le mot de passe lorsque le nouvel utilisateur utilise 'sudo'
 echo "$NEW_USER ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/$NEW_USER
 
