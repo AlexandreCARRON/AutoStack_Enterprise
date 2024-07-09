@@ -19,6 +19,66 @@ if [ -z "$NEW_USER" ]; then
   exit 1
 fi
 
+# ********************************************************************* Installation DOCKER *************************************
+# Installer Docker Engine
+echo "######### Installation de Docker Engine..."
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Ajouter le repo aux sources Apt
+echo "######### Ajout du repo aux sources Apt"
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+
+# Installation des packages Docker
+echo "######### Installation des packages Docker : docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# ********************************************************************* Installation GIT (inutile en principe) *************************************
+# Installer Git
+echo "######### Installation de Git..."
+sudo apt-get install -y git
+
+# ********************************************************************* Installation htop *************************************
+# Installer htop
+echo "######### Installation de htop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
+sudo apt-get install -y htop
+
+# ********************************************************************* Installation FAIL2BAN *************************************
+# Installation et configuration de Fail2Ban
+echo "######### Installation de Fail2Ban..."
+sudo apt-get install -y fail2ban
+
+# Configuration de Fail2Ban via le fichier préparamétré disponible dans le repo
+echo "######### Configuration de Fail2Ban..."
+sudo cp ./host/fail2ban/jail.local /etc/fail2ban/jail.local
+sudo service fail2ban restart
+
+echo "######### Les paramètre spécifiques de surveillance de protocols ont été implémentés et le service a été redémarré."
+
+# Vérifier la configuration de Fail2Ban
+echo "### Vérification de la configuration de Fail2Ban..."
+sudo fail2ban-client -d
+if [ $? -ne 0 ]; then
+  echo "######################## Erreur dans la configuration de Fail2Ban. Veuillez vérifier le fichier /etc/fail2ban/jail.local."
+  exit 1
+fi
+
+# Redémarrer Fail2Ban
+echo "######### Redémarrage de Fail2Ban..."
+sudo systemctl restart fail2ban
+
+# Vérifier l'état du service Fail2Ban
+echo "######### Vérification de l'état du service Fail2ban après redémarrage"
+sudo systemctl status fail2ban
+
 # ********************************************************************* Changements MDP et DROITS *************************************
 # Changer le mot de passe pour l'utilisateur root
 echo "######### Changement du mots de passe pour l'utilisateurs root"
@@ -86,66 +146,6 @@ fi
 sudo systemctl restart sshd
 
 echo "######### Le port SSH a été changé en $NEW_PORT_SSH et le service SSH a été redémarré. A la prochaine connexion, il faudra rajouter a la fin de votre commande "-p $NEW_PORT_SSH" !!
-
-# ********************************************************************* Installation DOCKER *************************************
-# Installer Docker Engine
-echo "######### Installation de Docker Engine..."
-sudo apt-get update
-sudo apt-get install ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Ajouter le repo aux sources Apt
-echo "######### Ajout du repo aux sources Apt"
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-sudo apt-get update
-
-# Installation des packages Docker
-echo "######### Installation des packages Docker : docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# ********************************************************************* Installation GIT (inutile en principe) *************************************
-# Installer Git
-echo "######### Installation de Git..."
-sudo apt-get install -y git
-
-# ********************************************************************* Installation htop *************************************
-# Installer htop
-echo "######### Installation de htop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
-sudo apt-get install -y htop
-
-# ********************************************************************* Installation FAIL2BAN *************************************
-# Installation et configuration de Fail2Ban
-echo "######### Installation de Fail2Ban..."
-sudo apt-get install -y fail2ban
-
-# Configuration de Fail2Ban via le fichier préparamétré disponible dans le repo
-echo "######### Configuration de Fail2Ban..."
-sudo cp ./host/fail2ban/jail.local /etc/fail2ban/jail.local
-sudo service fail2ban restart
-
-echo "######### Les paramètre spécifiques de surveillance de protocols ont été implémentés et le service a été redémarré."
-
-# Vérifier la configuration de Fail2Ban
-echo "### Vérification de la configuration de Fail2Ban..."
-sudo fail2ban-client -d
-if [ $? -ne 0 ]; then
-  echo "######################## Erreur dans la configuration de Fail2Ban. Veuillez vérifier le fichier /etc/fail2ban/jail.local."
-  exit 1
-fi
-
-# Redémarrer Fail2Ban
-echo "######### Redémarrage de Fail2Ban..."
-sudo systemctl restart fail2ban
-
-# Vérifier l'état du service Fail2Ban
-echo "######### Vérification de l'état du service Fail2ban après redémarrage"
-sudo systemctl status fail2ban
 
 # ********************************************************************* Avertissement et redémarrage du système *************************************
 
