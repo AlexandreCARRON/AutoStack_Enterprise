@@ -30,4 +30,5 @@
       - ./volumes/Odoo/odoo-web-data-client:/var/lib/odoo
       - ./volumes/Odoo/addons:/mnt/extra-addons
       - ./volumes/Odoo/etc:/etc/odoo
+      - ./volumes/odoo/odoo_logs:/var/log/odoo:ro
     restart: always
