@@ -3,7 +3,7 @@ apiVersion: 1
 datasources:
 - name: Prometheus
   type: prometheus
-  url: localhost:22190
+  url: http://<DNS_NAME>:22190 #changer le nom de domaine et utiliser http:// OU https:// en fonction de votre cas d'usage
   isDefault: true
   access: proxy
   editable: true
