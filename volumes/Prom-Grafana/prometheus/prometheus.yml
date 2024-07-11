@@ -29,9 +29,12 @@ scrape_configs:
   scrape_timeout: 10s
   metrics_path: /metrics
   scheme: https                # attention http ou https ? That is the question !
+  tls_config:
+    insecure_skip_verify: true
   basic_auth:
     username: 'toto'
     password: 'changemeoryouilldie'
+
  static_configs:
   - targets:
     - <votre-serveur>:<port>
