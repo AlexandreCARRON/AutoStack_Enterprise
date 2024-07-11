@@ -8,7 +8,7 @@
       - ${PROMETHEUS_PORT}:9090
     restart: unless-stopped
     volumes:
-      - ./prometheus:/etc/prometheus
+      - ./volumes/Prom-Grafana/prometheus:/etc/prometheus
       - prom_data:/prometheus
 
   grafana:
@@ -21,6 +21,6 @@
       - GF_SECURITY_ADMIN_USER
       - GF_SECURITY_ADMIN_PASSWORD
     volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
+      - ./volumes/Prom-Grafana/grafana:/etc/grafana/provisioning/datasources
 volumes:
   prom_data:
