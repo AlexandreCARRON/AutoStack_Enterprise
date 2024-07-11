@@ -18,5 +18,14 @@ scrape_configs:
   scheme: http
   static_configs:
   - targets:
-    - localhost:22190
+    - <votre_url>:<votre_port>
 
+- job_name: Uptime-kuma
+  honor_timestamps: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  metrics_path: /metrics
+  scheme: https
+  static_configs:
+  - targets:
+    - <votre_url>:<votre_port>
