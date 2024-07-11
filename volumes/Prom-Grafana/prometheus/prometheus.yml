@@ -16,16 +16,22 @@ scrape_configs:
   scrape_timeout: 10s
   metrics_path: /metrics
   scheme: http
+  basic_auth:
+    username: 'toto'
+    password: 'changemeoryouilldie'
   static_configs:
   - targets:
-    - <votre_url>:<votre_port>
+    - <votre-serveur>:22190
 
 - job_name: Uptime-kuma
   honor_timestamps: true
   scrape_interval: 15s
   scrape_timeout: 10s
   metrics_path: /metrics
-  scheme: https
-  static_configs:
+  scheme: https                # attention http ou https ? That is the question !
+  basic_auth:
+    username: 'toto'
+    password: 'changemeoryouilldie'
+ static_configs:
   - targets:
-    - <votre_url>:<votre_port>
+    - <votre-serveur>:<port>
