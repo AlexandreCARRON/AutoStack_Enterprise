@@ -172,6 +172,7 @@ if [[ "$response" == "y" || -z "$response" ]]; then
     echo "###### Copie du repo vierge vers le nouvel utilisateur"
     cd /home/$NEW_USER
     sudo git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git
+    sudo chmod +x /home/$NEW_USER/AutoStack_Enterprise/generate-docker-compose.sh
     echo "###### Redémarrage du système..."
     sudo reboot now
 else
