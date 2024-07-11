@@ -1,11 +1,11 @@
-services:
+################################################################ PROMETHEUS & GRAFANA ##############################################################
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
-      - 22190:9090
+      - ${PROMETHEUS_PORT}:9090
     restart: unless-stopped
     volumes:
       - ./prometheus:/etc/prometheus
@@ -15,11 +15,11 @@ services:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - 22103:3000
+      - ${GRAFANA_PORT}:3000
     restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_USER=toto
-      - GF_SECURITY_ADMIN_PASSWORD=changemeoryouilldie
+      - GF_SECURITY_ADMIN_USER
+      - GF_SECURITY_ADMIN_PASSWORD
     volumes:
       - ./grafana:/etc/grafana/provisioning/datasources
 volumes:
