@@ -46,6 +46,11 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 echo "######### Installation de Git..."
 sudo apt-get install -y git
 
+# ********************************************************************* Installation RSYNC *************************************
+# Installer Rsync
+echo "######### Installation de Rsync..."
+sudo apt-get install -y rsync
+
 # ********************************************************************* Installation htop *************************************
 # Installer htop
 echo "######### Installation de htop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
