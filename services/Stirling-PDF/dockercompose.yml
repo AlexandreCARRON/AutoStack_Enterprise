@@ -1,0 +1,15 @@
+ #******************************** STIRLING PDF (NON TESTé !!!) ****************************************************************************************************
+
+stirling-pdf:
+    image: frooodle/s-pdf:latest
+    ports:
+      - '{PORT_SPDF}:8080'
+    volumes:
+      - ./volumes/Stirling-PDF/trainingData:/usr/share/tessdata #Required for extra OCR languages
+      - ./volumes/Stirling-PDF/extraConfigs:/configs
+      - ./volumes/Stirling-PDF/customFiles:/customFiles/
+      - ./volumes/Stirling-PDF/logs:/logs/
+    environment:
+#      - DOCKER_ENABLE_SECURITY=false              attention a été enlevé car pas confiance, peut être à activer obligatoirement
+#      - INSTALL_BOOK_AND_ADVANCED_HTML_OPS=false   attention a été enlevé car pas confiance, peut être à activer obligatoirement
+      - LANGS=fr_FR
