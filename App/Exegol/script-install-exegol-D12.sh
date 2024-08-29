@@ -1,27 +1,6 @@
-
-#******************************** Exegol ****************************************************************************************************
+#******************************** SCRIPT Exegol ****************************************************************************************************
 
 #!/bin/bash
-
-# ********************************************************************* Charger les variables d'environnement à partir du fichier .env *************************************
-if [ -f .env ]; then
-  export $(cat .env | sed 's/#.*//g' | xargs)
-else
-  echo "##################### Fichier .env introuvable !"
-  exit 1
-fi
-
-# Vérifier si NEW_PASSWORD et NEW_USER sont définis
-if [ -z "$NEW_PASSWORD" ]; then
-  echo "#################### NEW_PASSWORD n'est pas défini dans le fichier .env !"
-#  exit 1
-fi
-
-if [ -z "$NEW_USER" ]; then
-  echo "################### NEW_USER n'est pas défini dans le fichier .env !"
-#  exit 1
-fi
-
 
 # ********************************************************************* Installation d'Exegol *************************************
 
