@@ -16,7 +16,16 @@ pipx install exegol
 pipx ensurepath
 
 #  ATTENTION IL Y A UN REDEMARRAGE OU RELOG A FAIRE POUR QUE LE NOUVEAU PATH SOIT PRIS EN COMPTE
-echo "################### ATTENTION IL Y A UN REDEMARRAGE OU RELOG A FAIRE POUR QUE LE NOUVEAU PATH SOIT PRIS EN COMPTE"
+read -p "=> REBOOT - Etes-vous ok pour redémarrer le serveur maintenant de manière à ce que le nouveau PATH soit pris en compte ? (Y/n) /n Il vous suffira de relancer le script pour continuer l'installation !" response
+response=${response,,} # Convertir en minuscule
+
+if [[ "$response" == "y" || -z "$response" ]]; then
+    echo "###### Redémarrage du système..."
+    sudo reboot now
+else
+    echo "#################### Redémarrage annulé. Vous pouvez redémarrer manuellement plus tard. ################"
+    echo "#################### La configuration vas continuer mais des erreurs impromptues pouraient apparaitre... ################"
+fi
 
 # Run Exegol with appropriate privileges
 echo "################### lancement de exegol avec les bons privilèges !"
