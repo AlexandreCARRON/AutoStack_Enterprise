@@ -14,12 +14,12 @@ fi
 # Vérifier si NEW_PASSWORD et NEW_USER sont définis
 if [ -z "$NEW_PASSWORD" ]; then
   echo "#################### NEW_PASSWORD n'est pas défini dans le fichier .env !"
-  exit 1
+#  exit 1
 fi
 
 if [ -z "$NEW_USER" ]; then
   echo "################### NEW_USER n'est pas défini dans le fichier .env !"
-  exit 1
+#  exit 1
 fi
 
 
