@@ -34,3 +34,14 @@ source ~/.bashrc
 
 # Installation of the first Exegol image
 exegol install
+
+# ********************************************************************* Installation du bash-completion permettant d'avoir des suggestions de commandes *************************************
+
+# If the command register-python-argcomplete is not found on your host, you have to install it
+sudo apt install python3-argcomplete -y
+
+# To setup the auto-completion system-wide you first need to install bash-completion on your system (if not already installed)
+sudo apt update && sudo apt install bash-completion -y
+
+# To generate and install the exegol completion configuration you can execute the following command with register-python-argcomplete
+register-python-argcomplete --no-defaults exegol | sudo tee /etc/bash_completion.d/exegol > /dev/null
