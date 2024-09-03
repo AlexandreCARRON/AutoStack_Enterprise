@@ -1,6 +1,6 @@
-  #******************************** ODOO ****************************************************************************************************
-
-  postgres-odoo:                                #base de donnée PostgreSQL de l'application Odoo       #ATTENTION changement à vérifier. ex db
+  #******************************** ODOO ***************************************************************************************************
+  
+  postgres:                                #base de donnée PostgreSQL de l'application Odoo       #ATTENTION changement à vérifier. ex db
     image: postgres:16
     user: root
     environment:
@@ -11,12 +11,14 @@
     restart: always
     volumes:
       - ./volumes/postgresql/data:/var/lib/postgresql/data
+      - ./volumes/postgresql/logs:/var/log/postgresql
+      - ./volumes/postgresql/config:/etc/postgresql
 
   odoo17:                           # Application Wordpress Like, en bien plus solide et sécurisé, et permettant de déployer ERP / CRM / outil RH / outil Marketing automation (UTM) / outil E-Learning / etc.
     image: odoo:17
     user: root
     depends_on:
-      - postgres-odoo       #ATTENTION changement à vérifier. ex db
+      - postgres   
     ports:
       - "${PORT_MNGT_ODOO}:8069" # port pour taper l'interface de management
       - "${PORT_LIVECHAT_ODOO}:8072" # live chat
