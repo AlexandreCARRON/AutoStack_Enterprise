@@ -51,10 +51,10 @@ sudo apt-get install -y git
 echo "######### Installation de Rsync..."
 sudo apt-get install -y rsync
 
-# ********************************************************************* Installation htop *************************************
-# Installer htop
-echo "######### Installation de htop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
-sudo apt-get install -y htop
+# ********************************************************************* Installation btop *************************************
+# Installer btop
+echo "######### Installation de btop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
+sudo apt-get install -y btop
 
 # ********************************************************************* Installation FAIL2BAN *************************************
 # Installation et configuration de Fail2Ban
