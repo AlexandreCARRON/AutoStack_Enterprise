@@ -16,7 +16,7 @@ sudo mv node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
 sudo useradd -rs /bin/false node_exporter
 
 # Copie le fichier de configuration service_node-config.txt dans le fichier de service systemd pour Node Exporter
-sudo cat service_node-config.txt > /etc/systemd/system/node_exporter.service
+sudo cat ./service_node-config.txt > /etc/systemd/system/node_exporter.service
 
 # Recharge les fichiers de configuration systemd pour prendre en compte le nouveau service
 sudo systemctl daemon-reload
