@@ -30,3 +30,5 @@ sudo systemctl status node_exporter
 
 # (Optionnel) Ouvre le port 9100 sur le firewall pour autoriser les connexions TCP à Node Exporter (commenté ici)
 # sudo ufw allow 9100/tcp
+
+echo "############################################# Les données Node Exporter sont maintenant disponibles via l'adresse <IP/DNS>:9100/metrics"
