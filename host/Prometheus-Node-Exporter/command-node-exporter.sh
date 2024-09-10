@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Met à jour la liste des paquets disponibles et met à jour les paquets installés
 sudo apt update && sudo apt upgrade -y
 
