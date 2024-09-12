@@ -56,6 +56,11 @@ sudo apt-get install -y rsync
 echo "######### Installation de btop, pour visualiser l'utilisation des ressources de votre hote directement dans le shell..."
 sudo apt-get install -y btop
 
+# ********************************************************************* Installation tree *************************************
+# Installer tree
+echo "######### Installation de btop, pour visualiser l'arborescende de vos dossiers directement dans le shell..."
+sudo apt-get install -y tree
+
 # ********************************************************************* Installation FAIL2BAN *************************************
 # Installation et configuration de Fail2Ban
 echo "######### Installation de Fail2Ban..."
