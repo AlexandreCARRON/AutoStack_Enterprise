@@ -133,15 +133,6 @@
       memlock:
         soft: -1
         hard: -1
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
-        ]
-      interval: 10s
-      timeout: 10s
-      retries: 120
 
   es03:
     depends_on:
@@ -172,46 +163,28 @@
       memlock:
         soft: -1
         hard: -1
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
-        ]
-      interval: 10s
-      timeout: 10s
-      retries: 120
 
   kibana:
-    depends_on:
-      es01:
-        condition: service_healthy
-      es02:
-        condition: service_healthy
-      es03:
-        condition: service_healthy
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    depends_on:
+      - es01
     volumes:
       - certs:/usr/share/kibana/config/certs
-      - kibanadata:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
     environment:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es01:9200
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=certificate
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
-      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ROLE=${XPACK_REPORTING_ROLE}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     mem_limit: ${MEM_LIMIT}
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
-        ]
-      interval: 10s
-      timeout: 10s
-      retries: 120
 
 volumes:
   certs:
@@ -221,6 +194,4 @@ volumes:
   esdata02:
     driver: local
   esdata03:
-    driver: local
-  kibanadata:
     driver: local
