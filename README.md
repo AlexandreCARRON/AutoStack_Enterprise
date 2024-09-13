@@ -27,7 +27,6 @@ Bisous Merci Bisous !
 
 ### Pré-paramétrage à la mano (très light)
 
-- Installer docker engine : [Lien vers la doc](https://docs.docker.com/engine/install/)
 - Installer git : `sudo apt install git`
 
 ### Pré-paramétrage automatisé via script
