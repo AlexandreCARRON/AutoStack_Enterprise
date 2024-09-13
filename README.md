@@ -46,8 +46,8 @@ Se rendre dans le dossier git nouvellement copié grace au script : `cd AutoStac
 
 Afin de générer un fichier docker-compose.yml avec uniquement les services qui vous interessent, executez generator-docker-compose.sh en mettant en argument les noms de dossiers des différents services à déployer : 
 
-    - Executer avec les bons arguments : <code>./generator-docker-compose.sh NomService1 NomService2 </code>
-    - Exemple pour deployer rapidement un site web avec odoo : <code>./generator-docker-compose.sh Nginx-Proxy-Manager Odoo</code>
+Executer avec les bons arguments : <code>sudo ./generate-docker-compose.sh NomService1 NomService2 </code>
+Exemple pour deployer rapidement un site web avec odoo : <code>sudo ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo</code>
 
 Vous pouvez maintenant aller éditer le fichier .env généré pour personnaliser les ports et mots de passes : <code>sudo nano .env</code>
 
