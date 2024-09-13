@@ -36,7 +36,7 @@ Bisous Merci Bisous !
 3. Rendez-vous dans le dossier nouvellement créé : <code>cd AutoStack_Enterprise</code>
 4. Modifiez le fichier .env pour y mettre le nom d'utilisateur et mdp que vous souhaitez : <code>sudo nano .env</code>
 5. Rendez exécutable le fichier script.sh : `sudo chmod +x script-conf-server-D12.sh`
-6. Exécutez ensuite le script : `./script-conf-server-D12.sh`
+6. Exécutez ensuite le script : `sudo ./script-conf-server-D12.sh`
 
   /!\ ATTENTION /!\ : Votre port SSH de connexion a été modifié selon la variable dans .env !! Si vous ne l'avez pas modifiée, vous pouvez maintenant taper <code>ssh toto@IPouDNS -p 22022</code>
 
