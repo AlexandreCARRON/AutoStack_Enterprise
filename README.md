@@ -42,9 +42,7 @@ Bisous Merci Bisous !
 
 ## Déploiement de l'infra
 
-Réimportez le repo depuis votre nouvel utilisateur : `sudo git clone https://github.com/AlexandreCARRON/Odoo-v17_Automatic-deployement-services.git`
-
-Se rendre dans le dossier copié : `cellelatulatrouvetoutseulhein!`
+Se rendre dans le dossier git nouvellement copié grace au script : `cd Autostack_Enterprise`
 
 Afin de générer un fichier docker-compose.yml avec uniquement les services qui vous interessent, executez generator-docker-compose.sh en mettant en argument les noms de dossiers des différents services à déployer : 
 Rendre éxécutable le fichier : <code>sudo chmod +x generator-docker-compose.sh</code>
