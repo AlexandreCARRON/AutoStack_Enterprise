@@ -1,29 +1,33 @@
-# Projet en cours, Readme très évolutif...
+# Autostack_Enterprise
 
-## Disclaimer
+## Introduction
 
-Bienvenue sur ce méga repo de ouf qui tue sa maman !!
+Bienvenue sur le repo Github du projet AutoStack_Enterprise. 
 
-Mouai... C'est en cours de dev !! Ca avance au fur et à mesure, et il y a encore énormément de choses à améliorer !
+Ce projet est en cours de développement, et représente une solution flexible pour les startups et autres projets à impact, leur permettant de déployer des infrastructures robustes et évolutives à faible coût. L'objectif est d'offrir une stack clé en main, facilement configurable, afin de permettre aux entreprises de tester rapidement leurs idées et de passer à l'échelle.
 
-Pleins de mauvaises pratiques tu trouveras ici jeune padawan (genre des :ro inexistants... mais sais-tu seulement de quoi je parle ?) ! Pour les maîtres Jedi, j'ai soif d'apprentissage, donc n'hésite pas à commenter les fichiers pour qu'on puisse améliorer ça ensemble ! Dans la bienveillance tu agiras, en toute humilité je réagirai !!
+Ce dépôt est en évolution constante, je travaille épidosiquement à l'amélioration du code et de la documentation. Toutes les contributions sont les bienvenues, que ce soit sous forme de retour d'expérience, de suggestions ou de propositions d'améliorations.
 
-Voici à date les améliorations à venir que j'envisage à court terme : 
-- Scinder les services et les appeler à la demande (Done!)
-- Améliorer la gestion des variables (A finir)
-- Script d'automatisation config machine hôte (A améliorer)
-- Meilleur gestion des entrypoint
-- Suppression des dossiers et fichiers (fake.md notamment) inutiles
-- Pondre une fucking doc digne de ce nom
-- Passer par les bons tuyaux pour faire mon backlog !!!
+## État actuel du projet
 
-Je suis preneur de toute aide autour de ce projet. En gros, l'idée est de faire une stack facile à mettre en place pour qu'on puisse aider les startups de notre Startup Nation (Youhou !), ou autres projets à impact, à avoir des outils efficients et peu coûteux pour qu'ils puissent tester leurs idées et scaler rapidement (je me fais presque peur avec mon vocabulaire !). Bref ! En vrai, je m'amuse à faire un projet qui, je l'espère, servira à d'autres pour gagner du temps sur leurs déploiements sans trop dépenser d'argent !
+Bien que fonctionnel sur plusieurs services, le projet est encore en phase de développement. Plusieurs optimisations et bonnes pratiques restent à implémenter. 
+Voici un aperçu des tâches à venir :
 
-Voilà fin du disclaimer : Pour ton infra, je m'occupe de rien, tu t'occupes de tout, et je ne saurais être tenu responsable d'une mauvaise utilisation ou d'un bug lié à ce repo !
+    Optimisation des services pour un appel à la demande (Terminé)
+    Amélioration de la gestion des variables d'environnement (En cours)
+    Automatisation du script de configuration pour la machine hôte (À améliorer)
+    Amélioration de la gestion des entrypoints
+    Nettoyage des fichiers et dossiers inutiles (comme fake.md)
+    Rédaction d'une documentation complète et détaillée
+    Organisation efficace du backlog pour les fonctionnalités à venir
 
-Bisous Merci Bisous !
+## Contribution
+
+J'encourage toutes les contributions, qu'elles concernent le code, la documentation ou simplement des retours constructifs. L'objectif est de faire de AutoStack_Enterprise un outil utile pour les entreprises et les développeurs souhaitant accélérer leur processus de déploiement.
 
 ## Pré-paramétrage du serveur HOST
+
+/!\ Ce repo est testé sur un ou plusieurs serveur VPS Debian 12, hébergés chez OVH. Quelques petites lignes, nottament au niveau des scripts, peuvent être à changer si vous utilisez un autre hébergeur ou OS Linux
 
 ### Pré-paramétrage à la mano (très light)
 
