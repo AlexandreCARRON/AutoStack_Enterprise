@@ -1,4 +1,26 @@
-# Proposer à l'utilisateur d'entrer un serveur de temps ou d'utiliser le serveur Google par défaut
+# Fonction pour afficher et choisir la timezone
+function Set-TimeZone {
+    $defaultTimeZone = "Europe/Paris"
+    $userTimeZone = Read-Host "Entrez la timezone que vous voulez utiliser (appuyez sur Entrée pour utiliser la timezone par défaut : $defaultTimeZone). Tapez 'liste' pour afficher toutes les timezones disponibles"
+
+    # Si l'utilisateur veut voir la liste
+    if ($userTimeZone -eq "liste") {
+        Write-Host "Voici la liste des timezones disponibles :"
+        tzutil /l
+        $userTimeZone = Read-Host "Saisissez une timezone valide parmi celles affichées"
+    }
+
+    # Si l'utilisateur ne choisit pas de timezone, on applique la timezone par défaut
+    if ([string]::IsNullOrEmpty($userTimeZone)) {
+        $userTimeZone = $defaultTimeZone
+    }
+
+    # Appliquer la timezone choisie
+    tzutil /s $userTimeZone
+    Write-Host "La timezone configurée est : $userTimeZone"
+}
+
+# Demander à l'utilisateur d'entrer un serveur de temps ou d'utiliser le serveur Google par défaut
 $defaultTimeServer = "time.google.com"
 $customTimeServer = Read-Host "Entrez l'adresse ou l'IP de votre serveur de temps (appuyez sur Entrée pour utiliser le serveur Google par défaut : $defaultTimeServer)"
 
@@ -27,3 +49,6 @@ w32tm /resync
 w32tm /query /status
 
 Write-Host "La configuration du serveur de temps est terminée. Le serveur de temps a été synchronisé avec $timeServer."
+
+# Demander et configurer la timezone
+Set-TimeZone
