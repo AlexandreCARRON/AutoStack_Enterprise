@@ -12,6 +12,7 @@
     volumes:
       - ./volumes/n8n/db_storage:/var/lib/postgresql/data
       - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+      - ./volumes/n8n/.n8n:/home/node/.n8n
     ports:
       - '${PORT_DB_N8N}:5432'
     healthcheck:
