@@ -32,7 +32,7 @@
       - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
       - N8N_SECURE_COOKIE=false               # A ENLEVER, mis uniquement pour faire les premiers tests !
-      - N8N_HOST=dev.alexandrecarron.fr
+      - N8N_HOST=yoururl.fr
       - N8N_PORT=${PORT_N8N}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     ports:
