@@ -1,8 +1,24 @@
-.docker
-.vscode
+# Secrets et configuration locale
+.env
+**/.env
+!.env.example
+!**/.env.example
+secret_*.txt
+**/*.pem
+**/*.key
+
+# Fichiers générés et artefacts d'exécution
+/docker-compose.yml
+*.generated.yml
+**/docker.sock
+.docker/
 node_modules/
 certs/
 conf.d/
 data/
 vhost.d/
-.env
+
+# Outils locaux
+.DS_Store
+.idea/
+.vscode/
