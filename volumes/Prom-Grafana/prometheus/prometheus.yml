@@ -18,7 +18,7 @@ scrape_configs:
   scheme: http
   basic_auth:
     username: 'toto'
-    password: 'changemeoryouilldie'
+    password: 'CHANGE_ME'
   static_configs:
   - targets:
     - <votre-serveur>:22190
@@ -33,7 +33,7 @@ scrape_configs:
     insecure_skip_verify: true
   basic_auth:
     username: 'toto'
-    password: 'changemeoryouilldie'
+    password: 'CHANGE_ME'
 
  static_configs:
   - targets:

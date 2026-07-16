@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Bienvenue sur le repo Github du projet AutoStack_Enterprise. 
+Bienvenue sur le repo Github du projet AutoStack_Enterprise.
 
 Ce projet est en cours de développement, et représente une solution flexible pour les startups et autres projets à impact, leur permettant de déployer des infrastructures robustes et évolutives à faible coût. L'objectif est d'offrir une stack clé en main, facilement configurable, afin de permettre aux entreprises de tester rapidement leurs idées et de passer à l'échelle.
 
@@ -10,16 +10,16 @@ Ce dépôt est en évolution constante, je travaille épidosiquement à l'améli
 
 ## État actuel du projet
 
-Bien que fonctionnel sur plusieurs services, le projet est encore en phase de développement. Plusieurs optimisations et bonnes pratiques restent à implémenter. 
+Bien que fonctionnel sur plusieurs services, le projet est encore en phase de développement. Plusieurs optimisations et bonnes pratiques restent à implémenter.
 Voici un aperçu des tâches à venir :
 
-    Optimisation des services pour un appel à la demande (Terminé)
-    Amélioration de la gestion des variables d'environnement (En cours)
-    Automatisation du script de configuration pour la machine hôte (À améliorer)
-    Amélioration de la gestion des entrypoints
-    Nettoyage des fichiers et dossiers inutiles (comme fake.md)
-    Rédaction d'une documentation complète et détaillée
-    Organisation efficace du backlog pour les fonctionnalités à venir
+- Optimisation des services pour un appel à la demande (Terminé)
+- Amélioration de la gestion des variables d'environnement (En cours)
+- Automatisation du script de configuration pour la machine hôte (À améliorer)
+- Amélioration de la gestion des entrypoints
+- Nettoyage des fichiers et dossiers inutiles (comme fake.md)
+- Rédaction d'une documentation complète et détaillée
+- Organisation efficace du backlog pour les fonctionnalités à venir
 
 ## Contribution
 
@@ -36,67 +36,91 @@ J'encourage toutes les contributions, qu'elles concernent le code, la documentat
 ### Pré-paramétrage automatisé via script
 
 1. Se logguer sur votre serveur fraîchement installé.
-2. Copiez le contenu de ce repo sur votre serveur : <code>sudo git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git</code>
-3. Rendez-vous dans le dossier nouvellement créé : <code>cd AutoStack_Enterprise</code>
-4. Modifiez le fichier .env pour y mettre le nom d'utilisateur et mdp que vous souhaitez : <code>sudo nano .env</code>
-5. Rendez exécutable le fichier script.sh : `sudo chmod +x script-conf-server-D12.sh`
-6. Exécutez ensuite le script : `sudo ./script-conf-server-D12.sh`
+2. Copiez le contenu de ce repo sur votre serveur : `git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git`.
+3. Rendez-vous dans le dossier nouvellement créé : `cd AutoStack_Enterprise`.
+4. Créez votre configuration locale : `cp .env.example .env`.
+5. Remplacez toutes les valeurs `CHANGE_ME` et adaptez l'utilisateur ainsi que le port SSH : `nano .env`.
+6. Rendez le script exécutable : `chmod +x script-conf-server-D12.sh`.
+7. Exécutez ensuite le script : `sudo ./script-conf-server-D12.sh`.
 
-  /!\ ATTENTION /!\ : Votre port SSH de connexion a été modifié selon la variable dans .env !! Si vous ne l'avez pas modifiée, vous pouvez maintenant taper <code>ssh toto@IPouDNS -p 22022</code>
+> **Attention :** le script modifie le port SSH selon `NEW_PORT_SSH`. Gardez une session ouverte jusqu'à avoir vérifié une nouvelle connexion.
 
 ## Déploiement de l'infra
 
-Se rendre dans le dossier git nouvellement copié grace au script : `cd AutoStack_Enterprise`
+Se rendre dans le dossier Git nouvellement copié : `cd AutoStack_Enterprise`.
 
-Afin de générer un fichier docker-compose.yml avec uniquement les services qui vous interessent, executez generator-docker-compose.sh en mettant en argument les noms de dossiers des différents services à déployer : 
+Le générateur assemble uniquement les services demandés. Il crée un fichier `.env` privé lors de la première exécution et y ajoute ensuite les variables manquantes sans remplacer les valeurs existantes.
 
-Executer avec les bons arguments : <code>sudo ./generate-docker-compose.sh NomService1 NomService2 </code>
-Exemple pour deployer rapidement un site web avec odoo : <code>sudo ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo</code>
+```bash
+./generate-docker-compose.sh NomService1 NomService2
+```
 
-Vous pouvez maintenant aller éditer le fichier .env généré pour personnaliser les ports et mots de passes : <code>sudo nano .env</code>
+Exemple pour déployer Nginx Proxy Manager et Odoo :
 
-Pour le premier déploiement histoire de vérifier que tout se passe bien : 
+```bash
+./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
+```
 
-`sudo docker compose up`
+Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
 
-En non verbeux pour pouvoir utiliser le shell ensuite (le `-d` signifie daemon => s'exécute en arrière-plan)
+```bash
+FORCE=1 ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
+```
 
-`sudo docker compose up -d`
+Avant le déploiement, remplacez toutes les valeurs `CHANGE_ME` dans `.env`, puis validez la configuration :
+
+```bash
+docker compose config --quiet
+docker compose up
+```
+
+Pour lancer la stack en arrière-plan :
+
+```bash
+docker compose up -d
+```
 
 ## Sécurité
 
 ### Gestion des mots de passe
 
-/!\ Attention à bien changer les mots de passe et ports dans le fichier généré `docker-compose.yml` ET dans le `odoo.conf` ET dans le .env (à terme plus de mdp dans `docker-compose.yml`, et fichier .dev généré automatiquement en fonction sevices à déployer) !!! /!\
+- Ne committez jamais `.env`, une clé privée ou un fichier `secret_*.txt`.
+- Remplacez toutes les valeurs `CHANGE_ME` avant le premier démarrage.
+- Traitez `volumes/Odoo/etc/odoo.conf` et les fichiers de configuration sous `volumes/` comme des données sensibles.
+- Préférez les secrets Docker ou des fichiers montés en lecture seule pour les identifiants de production.
+
+N8N utilise des volumes Docker nommés (`n8n_data` et `n8n_db_data`). Avant de migrer une installation existante basée sur les anciens dossiers `volumes/n8n`, sauvegardez puis transférez explicitement les données.
 
 ### Gestion des ports
 
-Les ports exposés sont déjà des ports pas communs donc c'est relativement bien. 
-Mais ce repo est public, donc des petits malins peuvent peut-être connaître vos ports d'exposition si vous ne les changez pas. 
-
-Pensez à changer tous les ports en 220XX avant de lancer votre infra ;) Et si je l'ai écrit trop tard, faites un `docker-compose down`, éditez le fichier docker-compose.yml, puis relancez. Sorry pour les manips, mais console toi en te disant que c'est le métier qui rentre jeune padawan !
+Un port non standard réduit seulement le bruit des scans automatisés ; ce n'est pas une mesure de sécurité. Limitez l'exposition avec le pare-feu, placez les interfaces d'administration derrière un reverse proxy HTTPS et n'ouvrez que les ports nécessaires.
 
 ## Commandes utiles
 
 ### Liste des containers UP
+
 `sudo docker ps`
 
 ### Liste des volumes
-`sudo docker ls`
+
+`sudo docker volume ls`
 
 ### Copier fichier/dossier depuis container vers host
+
 `sudo docker cp <container_id>:/path/to/file /host/path/to/destination`
 
 ### Afficher contenu d'un fichier du container depuis machine hôte
+
 `sudo docker exec <container_id> cat /path/to/file`
 
 ### Se connecter au shell à l'intérieur d'un container
+
 `sudo docker exec -it <id_container> bash`
 
 ## Licence
 
 Ce contenu est en licence GNU GPLv3, il peut être réutilisé comme bon vous semble, c'est cadeau ! Détails dans le fichier de licence.
 
-Petit glissage discret de fin pour que je puisse bouffer :  https://alexandrecarron.fr ! 
+Petit glissage discret de fin pour que je puisse bouffer : <https://alexandrecarron.fr> !
 
 Enjoy !

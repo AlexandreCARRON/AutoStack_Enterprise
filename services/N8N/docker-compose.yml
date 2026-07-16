@@ -10,11 +10,10 @@
       - POSTGRES_NON_ROOT_USER
       - POSTGRES_NON_ROOT_PASSWORD
     volumes:
-      - ./volumes/n8n/db_storage:/var/lib/postgresql/data
-      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
-      - ./volumes/n8n/.n8n:/home/node/.n8n
+      - n8n_db_data:/var/lib/postgresql/data
+      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
     ports:
-      - '${PORT_DB_N8N}:5432'
+      - '127.0.0.1:${PORT_DB_N8N}:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
@@ -31,17 +30,20 @@
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
-      - N8N_SECURE_COOKIE=false               # A ENLEVER, mis uniquement pour faire les premiers tests !
-      - N8N_HOST=yoururl.fr
-      - N8N_PORT=${PORT_N8N}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-true}
+      - WEBHOOK_URL=${N8N_PROTOCOL:-https}://${N8N_HOST}/
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     ports:
-      - ${PORT_N8N}:${PORT_N8N}
-    links:
-      - postgres_n8n
+      - '${PORT_N8N}:5678'
     volumes:
-      - ./volumes/n8n/n8n_storage:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
     depends_on:
       postgres_n8n:
         condition: service_healthy
-    user: "root:root"    #attention a vérifier coté sécurité... ajouté suite à u prb de droits sur le dossier n8n_storage. Peut probablemen être géré via ligne "entrypoint"
+
+volumes:
+  n8n_db_data:
+  n8n_data:
