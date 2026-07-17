@@ -1,0 +1,13 @@
+  jenkins:
+    image: ${JENKINS_IMAGE:?Définir JENKINS_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${JENKINS_BIND_ADDRESS:-127.0.0.1}:${MNGT_PORT_JENKINS}:8080"
+      - "${JENKINS_AGENT_BIND_ADDRESS:-127.0.0.1}:${TCP_AGENT_LISTENER_JENKINS}:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  jenkins_home:

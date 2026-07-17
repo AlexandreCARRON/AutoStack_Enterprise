@@ -9,7 +9,7 @@ readonly FORCE="${FORCE:-0}"
 
 usage() {
   cat <<'EOF'
-Usage: ./generate-docker-compose.sh service1 [service2 ...]
+Usage: ./generate-docker-compose.sh service1[/variante] [service2[/variante] ...]
 
 Variables optionnelles :
   COMPOSE_OUTPUT  Chemin du fichier Compose généré.
@@ -18,6 +18,9 @@ Variables optionnelles :
 
 Exemple :
   ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
+  ./generate-docker-compose.sh Odoo/Odoo_v17 Z_Nextcloud/Nextcloud_v33.0.6
+
+Sans variante, le fichier services/<service>/default-version est utilisé.
 EOF
 }
 
@@ -57,32 +60,57 @@ if [[ -f "${REPO_DIR}/.env.example" ]]; then
   cat "${REPO_DIR}/.env.example" >> "$env_tmp"
 fi
 
-for service in "$@"; do
-  [[ "$service" =~ ^[A-Za-z0-9._-]+$ ]] || fail "nom de service invalide : $service"
-  if grep -Fxq -- "$service" "$selected_services_file"; then
-    fail "service sélectionné plusieurs fois : $service"
-  fi
-  printf '%s\n' "$service" >> "$selected_services_file"
+for requested_service in "$@"; do
+  [[ "$requested_service" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$ ]] || \
+    fail "nom de service ou de variante invalide : $requested_service"
 
-  service_dir="${REPO_DIR}/services/${service}"
-  [[ -d "$service_dir" ]] || fail "service introuvable : $service"
+  service_name="${requested_service%%/*}"
+  service_root="${REPO_DIR}/services/${service_name}"
+  [[ -d "$service_root" ]] || fail "service introuvable : $service_name"
+
+  if [[ "$requested_service" == */* ]]; then
+    variant_name="${requested_service#*/}"
+    resolved_service="${service_name}/${variant_name}"
+    service_dir="${service_root}/${variant_name}"
+  else
+    resolved_service="$service_name"
+    service_dir="$service_root"
+
+    if [[ ! -f "${service_dir}/docker-compose.yml" && ! -f "${service_dir}/dockercompose.yml" ]]; then
+      default_version_file="${service_root}/default-version"
+      [[ -f "$default_version_file" ]] || \
+        fail "aucun Compose ni fichier default-version trouvé pour $service_name"
+      IFS= read -r variant_name < "$default_version_file" || \
+        fail "fichier default-version illisible pour $service_name"
+      [[ "$variant_name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || \
+        fail "variante par défaut invalide pour $service_name : $variant_name"
+      resolved_service="${service_name}/${variant_name}"
+      service_dir="${service_root}/${variant_name}"
+    fi
+  fi
+
+  [[ -d "$service_dir" ]] || fail "variante introuvable : $resolved_service"
+  if grep -Fxq -- "$resolved_service" "$selected_services_file"; then
+    fail "service sélectionné plusieurs fois : $resolved_service"
+  fi
+  printf '%s\n' "$resolved_service" >> "$selected_services_file"
 
   compose_source="${service_dir}/docker-compose.yml"
   if [[ ! -f "$compose_source" && -f "${service_dir}/dockercompose.yml" ]]; then
     compose_source="${service_dir}/dockercompose.yml"
   fi
-  [[ -f "$compose_source" ]] || fail "aucun fichier Compose trouvé pour $service"
+  [[ -f "$compose_source" ]] || fail "aucun fichier Compose trouvé pour $resolved_service"
 
   first_indent="$(awk '/^[[:space:]]*[A-Za-z0-9_.-]+:/ { match($0, /^[ ]*/); print RLENGTH; exit }' "$compose_source")"
   [[ "$first_indent" == "0" || "$first_indent" == "2" ]] || \
-    fail "indentation Compose non prise en charge pour $service"
+    fail "indentation Compose non prise en charge pour $resolved_service"
 
   explicit_services=0
   if grep -Eq '^services:[[:space:]]*$' "$compose_source"; then
     explicit_services=1
   fi
 
-  printf '\n  # --- %s ---\n' "$service" >> "$compose_tmp"
+  printf '\n  # --- %s ---\n' "$resolved_service" >> "$compose_tmp"
   if ! awk \
     -v explicit_services="$explicit_services" \
     -v first_indent="$first_indent" \
@@ -121,12 +149,12 @@ for service in "$@"; do
         }
       }
     ' "$compose_source" >> "$compose_tmp"; then
-    fail "format Compose incompatible pour $service"
+    fail "format Compose incompatible pour $resolved_service"
   fi
 
   env_example="${service_dir}/.env.example"
   if [[ -f "$env_example" ]]; then
-    printf '\n# --- %s ---\n' "$service" >> "$env_tmp"
+    printf '\n# --- %s ---\n' "$resolved_service" >> "$env_tmp"
     cat "$env_example" >> "$env_tmp"
     awk -F= '/^[A-Za-z_][A-Za-z0-9_]*=/ { print $1 }' "$env_example" >> "$required_vars"
   fi

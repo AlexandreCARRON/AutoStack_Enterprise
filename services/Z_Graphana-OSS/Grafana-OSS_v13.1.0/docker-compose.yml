@@ -1,0 +1,15 @@
+  grafana-oss:
+    image: ${GRAFANA_OSS_IMAGE:?Définir GRAFANA_OSS_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_OSS_BIND_ADDRESS:-127.0.0.1}:${GRAFANA_OSS_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_OSS_ADMIN_USER:?Définir GRAFANA_OSS_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_OSS_ADMIN_PASSWORD:?Définir GRAFANA_OSS_ADMIN_PASSWORD}
+    volumes:
+      - grafana_oss_data:/var/lib/grafana
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  grafana_oss_data:

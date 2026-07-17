@@ -1,0 +1,23 @@
+  backup_cron:
+    image: ${BORG_BACKUP_IMAGE:?Définir BORG_BACKUP_IMAGE}
+    restart: unless-stopped
+    volumes:
+      - ${BORG_SOURCE_PATH:?Définir BORG_SOURCE_PATH}:/var/folder_to_backup:ro
+    environment:
+      SSH_CONNECTION: ${BORG_SSH_CONNECTION:?Définir BORG_SSH_CONNECTION}
+      PRIVATE_KEY_PATH: /run/secrets/backup_server_user_private_key
+      BORG_REPO_PATH: ${BORG_REPO_PATH:?Définir BORG_REPO_PATH}
+      BORG_REPO_NAME: ${BORG_REPO_NAME:?Définir BORG_REPO_NAME}
+      LOCAL_FOLDER: /var/folder_to_backup
+      SSH_KNOWN_HOSTS: ${BORG_SSH_KNOWN_HOSTS:?Définir BORG_SSH_KNOWN_HOSTS}
+    secrets:
+      - backup_server_user_private_key
+      - borg_passphrase
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  backup_server_user_private_key:
+    file: ./secret_backup_server_user_private_key.txt
+  borg_passphrase:
+    file: ./secret_borg_passphrase.txt

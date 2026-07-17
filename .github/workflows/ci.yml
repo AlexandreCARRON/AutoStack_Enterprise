@@ -32,3 +32,16 @@ jobs:
           ENV_OUTPUT="$tmp_dir/.env" \
             ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo N8N
           docker compose --env-file "$tmp_dir/.env" -f "$tmp_dir/docker-compose.yml" config --quiet
+
+      - name: Valider toutes les variantes Compose
+        shell: bash
+        run: |
+          while IFS= read -r compose_file; do
+            service="$(basename "$(dirname "$(dirname "$compose_file")")")"
+            variant="$(basename "$(dirname "$compose_file")")"
+            tmp_dir="$(mktemp -d)"
+            COMPOSE_OUTPUT="$tmp_dir/docker-compose.yml" \
+            ENV_OUTPUT="$tmp_dir/.env" \
+              ./generate-docker-compose.sh "$service/$variant"
+            docker compose --env-file "$tmp_dir/.env" -f "$tmp_dir/docker-compose.yml" config --quiet
+          done < <(find services -mindepth 3 -maxdepth 3 -type f \( -name docker-compose.yml -o -name dockercompose.yml \) | sort)

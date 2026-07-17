@@ -1,0 +1,24 @@
+services:
+  nextcloud-aio-mastercontainer:
+    image: nextcloud/all-in-one:latest
+    init: true
+    restart: always
+    container_name: nextcloud-aio-mastercontainer
+    volumes:
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "${NEXTCLOUD_AIO_HTTP_PORT:-22090}:80"
+      - "${NEXTCLOUD_AIO_INTERFACE_PORT:-22091}:8080"
+      - "${NEXTCLOUD_AIO_HTTPS_PORT:-22093}:8443"
+    environment:
+      APACHE_PORT: 8080
+      APACHE_IP_BINDING: 127.0.0.1
+      NEXTCLOUD_DATADIR: /mnt/ncdata
+      NEXTCLOUD_MOUNT: /mnt/
+      NEXTCLOUD_UPLOAD_LIMIT: 50G
+      TALK_PORT: 22478
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer

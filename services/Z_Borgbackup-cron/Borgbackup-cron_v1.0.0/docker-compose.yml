@@ -25,3 +25,8 @@ secrets:
     file: ./secret_backup_server_user_private_key.txt
   borg_passphrase:
     file: ./secret_borg_passphrase.txt
+  db_password:
+    file: ./secret_db_password.txt
+
+volumes:
+  data:

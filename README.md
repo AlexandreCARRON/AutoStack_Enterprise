@@ -49,7 +49,7 @@ J'encourage toutes les contributions, qu'elles concernent le code, la documentat
 
 Se rendre dans le dossier Git nouvellement copié : `cd AutoStack_Enterprise`.
 
-Le générateur assemble uniquement les services demandés. Il crée un fichier `.env` privé lors de la première exécution et y ajoute ensuite les variables manquantes sans remplacer les valeurs existantes.
+Le générateur assemble uniquement les services demandés. Il crée un fichier `.env` privé lors de la première exécution et y ajoute ensuite les variables manquantes sans remplacer les valeurs existantes. Chaque dossier de service contient un fichier `default-version` qui désigne la variante utilisée lorsqu'aucune version n'est précisée.
 
 ```bash
 ./generate-docker-compose.sh NomService1 NomService2
@@ -60,6 +60,22 @@ Exemple pour déployer Nginx Proxy Manager et Odoo :
 ```bash
 ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
 ```
+
+Pour sélectionner explicitement une ancienne version :
+
+```bash
+./generate-docker-compose.sh Nginx-Proxy-Manager/Nginx-Proxy-Manager_v2.15.0 Odoo/Odoo_v17
+```
+
+Les versions proposées, les variantes historiques et les exceptions non versionnées sont recensées dans [VERSIONS.md](VERSIONS.md).
+
+## Documentation
+
+- [Index de la documentation](docs/README.md)
+- [Architecture du dépôt](docs/architecture.md)
+- [Guide de déploiement](docs/deployment.md)
+- [Guide de migration](docs/migrations.md)
+- [Catalogue des versions](VERSIONS.md)
 
 Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
 
@@ -80,16 +96,36 @@ Pour lancer la stack en arrière-plan :
 docker compose up -d
 ```
 
+## Versions et migrations
+
+### Odoo
+
+La variante par défaut utilise Odoo 19. La variante `Odoo/Odoo_v17` conserve Odoo 17 et son montage de modules personnalisés. Ces modules ne sont volontairement pas montés dans Odoo 19.
+
+Avant une montée majeure, sauvegardez la base et le filestore, demandez une base de test migrée, puis adaptez `ODOO_IMAGE` uniquement après validation. Consultez la [documentation officielle de mise à niveau Odoo](https://www.odoo.com/documentation/19.0/administration/upgrade.html).
+
+Odoo 17 et Odoo 19 utilisent des volumes nommés distincts. Une installation existante basée sur `volumes/postgresql/data` ou `volumes/Odoo/odoo-web-data-client` doit être sauvegardée et migrée explicitement avant le premier démarrage de la nouvelle variante.
+
+`ODOO_LIST_DB=True` permet l'initialisation d'une nouvelle instance. Après création et validation de la base, passez cette variable à `False` et conservez un `ODOO_DB_FILTER` restrictif afin de désactiver le gestionnaire de bases public.
+
+### Nextcloud
+
+La stack classique utilise Nextcloud 34.0.1 par défaut et conserve `Z_Nextcloud/Nextcloud_v33.0.6`. Une instance existante doit installer les versions majeures successivement sans en sauter. Consultez la [procédure officielle de mise à niveau Nextcloud](https://docs.nextcloud.com/server/stable/admin_manual/maintenance/upgrade.html).
+
+Les deux variantes utilisent des volumes distincts. La stack classique ajoute Redis pour le verrouillage et le cache et isole PostgreSQL et Redis sur un réseau interne. Migrez les données et la base après sauvegarde ; ne copiez pas directement un répertoire PostgreSQL entre versions majeures.
+
+Nextcloud AIO suit le canal officiel `ghcr.io/nextcloud-releases/all-in-one:latest` et gère les versions de ses conteneurs depuis son interface. Ne remplacez pas individuellement les images qu'il orchestre. Si le reverse proxy fonctionne dans un conteneur, configurez `NEXTCLOUD_AIO_APACHE_ADDITIONAL_NETWORK` selon la [documentation AIO](https://github.com/nextcloud/all-in-one/blob/main/reverse-proxy.md). L'accès à des répertoires hôte supplémentaires via `NEXTCLOUD_MOUNT` reste volontairement désactivé par défaut.
+
 ## Sécurité
 
 ### Gestion des mots de passe
 
 - Ne committez jamais `.env`, une clé privée ou un fichier `secret_*.txt`.
 - Remplacez toutes les valeurs `CHANGE_ME` avant le premier démarrage.
-- Traitez `volumes/Odoo/etc/odoo.conf` et les fichiers de configuration sous `volumes/` comme des données sensibles.
+- Traitez `.env` et les données persistantes comme sensibles ; la configuration Odoo est générée depuis les variables d'environnement.
 - Préférez les secrets Docker ou des fichiers montés en lecture seule pour les identifiants de production.
 
-N8N utilise des volumes Docker nommés (`n8n_data` et `n8n_db_data`). Avant de migrer une installation existante basée sur les anciens dossiers `volumes/n8n`, sauvegardez puis transférez explicitement les données.
+La variante n8n 2.30.5 utilise des volumes Docker séparés (`n8n_2305_data` et `n8n_2305_db_data`). Avant de migrer une installation existante, exportez les workflows et identifiants, sauvegardez PostgreSQL et conservez la même `N8N_ENCRYPTION_KEY`.
 
 ### Gestion des ports
 

@@ -1,0 +1,7 @@
+  web-check:
+    image: ${WEB_CHECK_IMAGE:?Définir WEB_CHECK_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${WEB_CHECK_BIND_ADDRESS:-127.0.0.1}:${PORT_WEBCHECK}:3000"
+    security_opt:
+      - no-new-privileges:true
