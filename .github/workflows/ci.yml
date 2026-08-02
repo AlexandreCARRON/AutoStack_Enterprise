@@ -14,11 +14,14 @@ jobs:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
+      - name: Valider le contrat du dépôt
+        run: python3 scripts/validate_repository.py
+
       - name: Valider le pilote ROI IA
         run: python3 scripts/validate_roi_pilot.py measurement/KPI-SELECTION.yml --observations measurement/OBSERVATIONS.jsonl
 
-      - name: Tester le validateur ROI IA
-        run: python3 -m unittest tests/test_validate_roi_pilot.py
+      - name: Tester les validateurs Python
+        run: python3 -m unittest discover -s tests -v
 
       - name: Vérifier la syntaxe Bash
         shell: bash

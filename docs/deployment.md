@@ -1,3 +1,12 @@
+---
+id: autostack.deployment
+kind: guide
+status: active
+last_reviewed: 2026-08-03
+sensitivity: public
+sources: ["../generate-docker-compose.sh", "../SECURITY.md"]
+---
+
 # Déploiement
 
 ## Choisir une variante

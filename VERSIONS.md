@@ -1,3 +1,12 @@
+---
+id: autostack.versions
+kind: fact
+status: active
+last_reviewed: 2026-07-17
+sensitivity: public
+sources: ["https://hub.docker.com/", "https://github.com/nextcloud/all-in-one/blob/main/compose.yaml"]
+---
+
 # Catalogue des versions
 
 Versions vérifiées le 17 juillet 2026. Le nom court d'un service sélectionne la variante indiquée par son fichier `default-version`. Une variante historique doit être appelée avec son chemin complet, par exemple `Odoo/Odoo_v17`.

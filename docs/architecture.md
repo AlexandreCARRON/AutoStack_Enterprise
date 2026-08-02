@@ -1,3 +1,12 @@
+---
+id: autostack.architecture
+kind: guide
+status: active
+last_reviewed: 2026-08-03
+sensitivity: public
+sources: ["../generate-docker-compose.sh", "../VERSIONS.md"]
+---
+
 # Architecture du dépôt
 
 ## Organisation générale
@@ -15,7 +24,11 @@ AutoStack_Enterprise/
 │           └── docker-compose.yml
 ├── volumes/
 ├── docs/
+├── decisions/
+├── scripts/
+├── tests/
 ├── generate-docker-compose.sh
+├── AGENTS.md
 ├── README.md
 └── VERSIONS.md
 ```
@@ -57,5 +70,9 @@ La CI exécute :
 - les tests du générateur ;
 - `docker compose config --quiet` sur les assemblages représentatifs ;
 - `docker compose config --quiet` sur chaque variante historique et récente.
+- le contrat documentaire, les liens locaux, les valeurs par défaut et l'hygiène élémentaire des secrets ;
+- les tests du validateur ROI et du contrat de dépôt.
 
 Les dossiers ne contenant qu'un lien ou un placeholder ne sont pas intégrés au catalogue exécutable tant qu'aucun fichier Compose validé n'est fourni.
+
+Les règles de maintenance sont décrites dans [la gouvernance](governance.md). Les choix transversaux sont séparés dans [`decisions/`](../decisions/README.md) afin de ne pas confondre état observé et décision durable.

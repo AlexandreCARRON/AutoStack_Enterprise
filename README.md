@@ -1,12 +1,21 @@
-# Autostack_Enterprise
+---
+id: autostack.readme
+kind: guide
+status: active
+last_reviewed: 2026-08-03
+sensitivity: public
+sources: ["docs/README.md", "VERSIONS.md"]
+---
+
+# AutoStack Enterprise
 
 ## Introduction
 
-Bienvenue sur le repo Github du projet AutoStack_Enterprise.
+AutoStack Enterprise fournit un catalogue de services Docker Compose versionnés et un générateur qui assemble uniquement les briques demandées.
 
-Ce projet est en cours de développement, et représente une solution flexible pour les startups et autres projets à impact, leur permettant de déployer des infrastructures robustes et évolutives à faible coût. L'objectif est d'offrir une stack clé en main, facilement configurable, afin de permettre aux entreprises de tester rapidement leurs idées et de passer à l'échelle.
+Le projet vise les startups et les projets à impact qui souhaitent tester une infrastructure configurable avant de passer à l'échelle. Les configurations proposées restent des références à adapter et à sécuriser selon le contexte de déploiement.
 
-Ce dépôt est en évolution constante, je travaille épidosiquement à l'amélioration du code et de la documentation. Toutes les contributions sont les bienvenues, que ce soit sous forme de retour d'expérience, de suggestions ou de propositions d'améliorations.
+Le dépôt évolue par pull requests vérifiées. Les contributions peuvent prendre la forme de retours d'expérience, de corrections ou de propositions ciblées.
 
 ## État actuel du projet
 
@@ -18,12 +27,12 @@ Voici un aperçu des tâches à venir :
 - Automatisation du script de configuration pour la machine hôte (À améliorer)
 - Amélioration de la gestion des entrypoints
 - Nettoyage des fichiers et dossiers inutiles (comme fake.md)
-- Rédaction d'une documentation complète et détaillée
+- Enrichissement progressif de la documentation opérationnelle
 - Organisation efficace du backlog pour les fonctionnalités à venir
 
 ## Contribution
 
-J'encourage toutes les contributions, qu'elles concernent le code, la documentation ou simplement des retours constructifs. L'objectif est de faire de AutoStack_Enterprise un outil utile pour les entreprises et les développeurs souhaitant accélérer leur processus de déploiement.
+Les contributions concernant le code, la documentation et les retours constructifs sont bienvenues. Consultez le [guide de contribution](CONTRIBUTING.md) avant de proposer un changement.
 
 ## Pré-paramétrage du serveur HOST
 
@@ -75,6 +84,10 @@ Les versions proposées, les variantes historiques et les exceptions non version
 - [Architecture du dépôt](docs/architecture.md)
 - [Guide de déploiement](docs/deployment.md)
 - [Guide de migration](docs/migrations.md)
+- [Gouvernance du dépôt](docs/governance.md)
+- [Décisions d'architecture](decisions/README.md)
+- [Guide de contribution](CONTRIBUTING.md)
+- [Politique de sécurité](SECURITY.md)
 - [Catalogue des versions](VERSIONS.md)
 
 Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
