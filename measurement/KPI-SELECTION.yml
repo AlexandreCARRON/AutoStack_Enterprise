@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "project_id": "autostack-enterprise",
+  "pilot_status": "active",
+  "catalog_ref": "ai-roi.global@1",
+  "last_reviewed": "2026-08-03",
+  "owner": "AlexandreCARRON",
+  "review_cadence": "weekly",
+  "privacy": "public-operational-only",
+  "baseline": {
+    "status": "collecting",
+    "minimum_observations": 5,
+    "source": "Pull requests et exécutions GitHub Actions terminées",
+    "rule": "Les cibles sont définies seulement après cinq observations comparables."
+  },
+  "selected_kpis": [
+    {
+      "id": "delivery.lead-time-hours",
+      "version": 1,
+      "status": "active",
+      "unit": "hours",
+      "aggregation": "weighted_mean",
+      "source": "Horodatages de création et de fusion des pull requests",
+      "target": null
+    },
+    {
+      "id": "quality.first-pass-validation-rate",
+      "version": 1,
+      "status": "active",
+      "unit": "ratio",
+      "aggregation": "ratio",
+      "source": "Première exécution GitHub Actions associée au commit évalué",
+      "target": null
+    },
+    {
+      "id": "quality.rework-rate",
+      "version": 1,
+      "status": "active",
+      "unit": "ratio",
+      "aggregation": "ratio",
+      "source": "Corrections significatives demandées après la première validation",
+      "target": null
+    },
+    {
+      "id": "reuse.asset-use-rate",
+      "version": 1,
+      "status": "active",
+      "unit": "ratio",
+      "aggregation": "ratio",
+      "source": "Tâches éligibles et actifs IA explicitement référencés",
+      "target": null
+    },
+    {
+      "id": "continuity.resume-time-minutes",
+      "version": 1,
+      "status": "proposed",
+      "unit": "minutes",
+      "aggregation": "weighted_mean",
+      "source": "Durée déclarée entre la reprise et l'obtention d'un état Git vérifié",
+      "target": null
+    }
+  ],
+  "excluded_kpis": [
+    {
+      "id": "cost.total-eur",
+      "reason": "Donnée financière exclue du dépôt public."
+    },
+    {
+      "id": "context.ai-cost-per-completed-task-eur",
+      "reason": "Coût fournisseur exclu du dépôt public."
+    },
+    {
+      "id": "efficiency.human-time-saved-hours",
+      "reason": "Baseline de temps comparable encore absente."
+    }
+  ]
+}

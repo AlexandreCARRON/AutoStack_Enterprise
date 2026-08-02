@@ -22,3 +22,7 @@ vhost.d/
 .DS_Store
 .idea/
 .vscode/
+
+# Mesures ROI privées exclues du dépôt public
+measurement/private/
+measurement/*.private.jsonl
