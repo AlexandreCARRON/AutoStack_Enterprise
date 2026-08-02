@@ -1,0 +1,72 @@
+  # Odoo 19 utilise un stockage séparé. Ne branchez pas ici les modules Odoo 17.
+  postgres:
+    image: ${POSTGRES_IMAGE_ODOO:?Définir POSTGRES_IMAGE_ODOO}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_ODOO:?Définir POSTGRES_USER_ODOO}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ODOO:?Définir POSTGRES_PASSWORD_ODOO}
+      POSTGRES_DB: ${POSTGRES_DB_ODOO:-postgres}
+      PGDATA: /var/lib/postgresql/18/docker
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+    volumes:
+      - odoo19_db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_ODOO} -d ${POSTGRES_DB_ODOO:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - odoo-internal
+    security_opt:
+      - no-new-privileges:true
+
+  odoo:
+    image: ${ODOO_IMAGE:?Définir ODOO_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${ODOO_BIND_ADDRESS:-127.0.0.1}:${PORT_MNGT_ODOO}:8069"
+      - "${ODOO_BIND_ADDRESS:-127.0.0.1}:${PORT_LIVECHAT_ODOO}:8072"
+    environment:
+      HOST: postgres
+      PORT: 5432
+      USER: ${USER_ODOO:?Définir USER_ODOO}
+      PASSWORD: ${PASSWORD_ODOO:?Définir PASSWORD_ODOO}
+    command: ["odoo", "--config=/etc/odoo/odoo.conf"]
+    volumes:
+      - odoo19_data:/var/lib/odoo
+    configs:
+      - source: odoo_config
+        target: /etc/odoo/odoo.conf
+        mode: 0444
+    networks:
+      - default
+      - odoo-internal
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  odoo19_db_data:
+  odoo19_data:
+
+networks:
+  odoo-internal:
+    internal: true
+
+configs:
+  odoo_config:
+    content: |
+      [options]
+      admin_passwd = ${ODOO_ADMIN_PASSWORD:?Définir ODOO_ADMIN_PASSWORD}
+      addons_path = /usr/lib/python3/dist-packages/odoo/addons
+      data_dir = /var/lib/odoo
+      dbfilter = ${ODOO_DB_FILTER:-^odoo.*}
+      list_db = ${ODOO_LIST_DB:-True}
+      proxy_mode = ${ODOO_PROXY_MODE:-True}
+      workers = ${ODOO_WORKERS:-2}
+      max_cron_threads = ${ODOO_MAX_CRON_THREADS:-1}
+      limit_time_cpu = ${ODOO_LIMIT_TIME_CPU:-600}
+      limit_time_real = ${ODOO_LIMIT_TIME_REAL:-1200}

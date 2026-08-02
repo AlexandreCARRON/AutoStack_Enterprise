@@ -1,0 +1,62 @@
+  postgres_n8n:
+    image: ${POSTGRES_IMAGE_N8N:?Définir POSTGRES_IMAGE_N8N}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Définir POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Définir POSTGRES_DB}
+      POSTGRES_NON_ROOT_USER: ${POSTGRES_NON_ROOT_USER:?Définir POSTGRES_NON_ROOT_USER}
+      POSTGRES_NON_ROOT_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD:?Définir POSTGRES_NON_ROOT_PASSWORD}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+    volumes:
+      - n8n_2305_db_data:/var/lib/postgresql
+      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - n8n-internal
+    security_opt:
+      - no-new-privileges:true
+
+  n8n:
+    image: ${N8N_IMAGE:?Définir N8N_IMAGE}
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres_n8n
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_NON_ROOT_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+      N8N_HOST: ${N8N_HOST:?Définir N8N_HOST}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-true}
+      WEBHOOK_URL: ${N8N_PROTOCOL:-https}://${N8N_HOST}/
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Définir N8N_ENCRYPTION_KEY}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+    ports:
+      - "${N8N_BIND_ADDRESS:-127.0.0.1}:${PORT_N8N}:5678"
+    volumes:
+      - n8n_2305_data:/home/node/.n8n
+    depends_on:
+      postgres_n8n:
+        condition: service_healthy
+    networks:
+      - default
+      - n8n-internal
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  n8n_2305_db_data:
+  n8n_2305_data:
+
+networks:
+  n8n-internal:
+    internal: true

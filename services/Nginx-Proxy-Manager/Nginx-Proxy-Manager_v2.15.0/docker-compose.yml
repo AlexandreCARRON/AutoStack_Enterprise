@@ -1,0 +1,12 @@
+  nginx-proxy-manager:
+    image: ${NGINX_PROXY_MANAGER_IMAGE:?Définir NGINX_PROXY_MANAGER_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PROXY_PUBLIC_BIND_ADDRESS:-0.0.0.0}:80:80"
+      - "${NGINX_PROXY_ADMIN_BIND_ADDRESS:-127.0.0.1}:${PORT_NGINX_PROXY_MANAGER}:81"
+      - "${NGINX_PROXY_PUBLIC_BIND_ADDRESS:-0.0.0.0}:443:443"
+    volumes:
+      - ./volumes/Nginx-proxy-manager/data:/data
+      - ./volumes/Nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+    security_opt:
+      - no-new-privileges:true

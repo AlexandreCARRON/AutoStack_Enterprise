@@ -1,0 +1,12 @@
+  uptime-kuma:
+    image: ${UPTIME_KUMA_IMAGE:?Définir UPTIME_KUMA_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${UPTIME_KUMA_BIND_ADDRESS:-127.0.0.1}:${PORT_MNGT_KUMA}:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  uptime_kuma_data:

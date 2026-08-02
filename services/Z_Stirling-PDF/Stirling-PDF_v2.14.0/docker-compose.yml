@@ -1,0 +1,23 @@
+  stirling-pdf:
+    image: ${STIRLING_PDF_IMAGE:?Définir STIRLING_PDF_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${STIRLING_PDF_BIND_ADDRESS:-127.0.0.1}:${STIRLING_PDF_PORT}:8080"
+    volumes:
+      - stirling_pdf_configs:/configs
+      - stirling_pdf_logs:/logs
+      - stirling_pdf_custom_files:/customFiles
+      - stirling_pdf_pipeline:/pipeline
+    environment:
+      SECURITY_ENABLELOGIN: "true"
+      SECURITY_INITIALLOGIN_USERNAME: ${STIRLING_PDF_ADMIN_USER:?Définir STIRLING_PDF_ADMIN_USER}
+      SECURITY_INITIALLOGIN_PASSWORD: ${STIRLING_PDF_ADMIN_PASSWORD:?Définir STIRLING_PDF_ADMIN_PASSWORD}
+      SYSTEM_DEFAULTLOCALE: ${STIRLING_PDF_DEFAULT_LOCALE:-fr-FR}
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  stirling_pdf_configs:
+  stirling_pdf_logs:
+  stirling_pdf_custom_files:
+  stirling_pdf_pipeline:

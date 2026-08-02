@@ -3,7 +3,7 @@
 stirling-pdf:
     image: frooodle/s-pdf:latest
     ports:
-      - '{PORT_SPDF}:8080'
+      - '${PORT_SPDF}:8080'
     volumes:
       - ./volumes/Stirling-PDF/trainingData:/usr/share/tessdata #Required for extra OCR languages
       - ./volumes/Stirling-PDF/extraConfigs:/configs

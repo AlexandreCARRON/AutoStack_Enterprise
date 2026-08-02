@@ -1,0 +1,81 @@
+  # Nextcloud 34 utilise des volumes séparés afin d'imposer une migration explicite.
+  db-nextcloud:
+    image: ${POSTGRES_IMAGE_NEXTCLOUD:?Définir POSTGRES_IMAGE_NEXTCLOUD}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NEXTCLOUD:?Définir POSTGRES_DB_NEXTCLOUD}
+      POSTGRES_USER: ${POSTGRES_USER_NEXTCLOUD:?Définir POSTGRES_USER_NEXTCLOUD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_NEXTCLOUD:?Définir POSTGRES_PASSWORD_NEXTCLOUD}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+    volumes:
+      - nextcloud34_db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_NEXTCLOUD} -d ${POSTGRES_DB_NEXTCLOUD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - nextcloud-internal
+    security_opt:
+      - no-new-privileges:true
+
+  redis-nextcloud:
+    image: ${REDIS_IMAGE_NEXTCLOUD:?Définir REDIS_IMAGE_NEXTCLOUD}
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - nextcloud34_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nextcloud-internal
+    security_opt:
+      - no-new-privileges:true
+
+  nextcloud:
+    image: ${NEXTCLOUD_IMAGE:?Définir NEXTCLOUD_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      db-nextcloud:
+        condition: service_healthy
+      redis-nextcloud:
+        condition: service_healthy
+    ports:
+      - "${NEXTCLOUD_BIND_ADDRESS:-127.0.0.1}:${NEXTCLOUD_PORT}:80"
+    volumes:
+      - nextcloud34_app_data:/var/www/html
+    environment:
+      POSTGRES_HOST: db-nextcloud
+      POSTGRES_DB: ${POSTGRES_DB_NEXTCLOUD}
+      POSTGRES_USER: ${POSTGRES_USER_NEXTCLOUD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_NEXTCLOUD}
+      REDIS_HOST: redis-nextcloud
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:?Définir NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:?Définir NEXTCLOUD_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NEXTCLOUD_TRUSTED_DOMAINS:?Définir NEXTCLOUD_TRUSTED_DOMAINS}
+      TRUSTED_PROXIES: ${NEXTCLOUD_TRUSTED_PROXIES:-172.16.0.0/12}
+      OVERWRITEHOST: ${NEXTCLOUD_OVERWRITE_HOST:?Définir NEXTCLOUD_OVERWRITE_HOST}
+      OVERWRITEPROTOCOL: ${NEXTCLOUD_OVERWRITE_PROTOCOL:-https}
+      OVERWRITECLIURL: ${NEXTCLOUD_OVERWRITE_CLI_URL:?Définir NEXTCLOUD_OVERWRITE_CLI_URL}
+      PHP_MEMORY_LIMIT: ${NEXTCLOUD_PHP_MEMORY_LIMIT:-1G}
+      PHP_UPLOAD_LIMIT: ${NEXTCLOUD_PHP_UPLOAD_LIMIT:-16G}
+      APACHE_BODY_LIMIT: ${NEXTCLOUD_APACHE_BODY_LIMIT:-0}
+      NEXTCLOUD_INIT_HTACCESS: ${NEXTCLOUD_INIT_HTACCESS:-true}
+    networks:
+      - default
+      - nextcloud-internal
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  nextcloud34_db_data:
+  nextcloud34_redis_data:
+  nextcloud34_app_data:
+
+networks:
+  nextcloud-internal:
+    internal: true

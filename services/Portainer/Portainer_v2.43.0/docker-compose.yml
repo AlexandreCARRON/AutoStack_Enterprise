@@ -1,0 +1,14 @@
+  portainer:
+    image: ${PORTAINER_IMAGE:?Définir PORTAINER_IMAGE}
+    restart: unless-stopped
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "${PORTAINER_BIND_ADDRESS:-127.0.0.1}:${PORT_MNGT_PORTAINER}:9443"
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  portainer_data:
