@@ -1,0 +1,64 @@
+services:
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.18
+    container_name: etcd
+
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd0
+      - --advertise-client-urls=http://0.0.0.0:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+
+    networks:
+      apisix-net:
+        ipv4_address: 172.18.5.10
+
+  apisix:
+    image: apache/apisix:latest
+    container_name: apisix
+
+    depends_on:
+      - etcd
+
+    volumes:
+      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml
+
+    ports:
+      - "9080:9080"
+      - "9180:9180"
+      - "9443:9443"
+
+    networks:
+      apisix-net:
+        ipv4_address: 172.18.5.11
+
+  apisix-dashboard:
+    image: apache/apisix-dashboard
+    container_name: apisix-dashboard
+
+    depends_on:
+      - etcd
+
+    volumes:
+      - ./dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+
+    ports:
+      - "9000:9000"
+
+    networks:
+      apisix-net:
+        ipv4_address: 172.18.5.12
+
+networks:
+  apisix-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          ip_range: 172.18.5.0/24
+          gateway: 172.18.5.254
