@@ -4,7 +4,7 @@ kind: guide
 status: active
 last_reviewed: 2026-09-08
 sensitivity: public
-sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml"]
+sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
 ---
 
 # Apache APISIX
@@ -44,6 +44,25 @@ docker compose ps
 ```
 
 Le Dashboard est alors disponible sur <http://127.0.0.1:9180/ui/>. Saisissez la même valeur `APISIX_ADMIN_KEY` lorsqu'il la demande.
+
+## Contournement temporaire d'une inspection TLS
+
+Si `docker compose pull` échoue avec `x509: certificate signed by unknown authority` parce qu'un proxy d'entreprise intercepte Quay, la correction recommandée consiste à installer l'autorité de certification de l'entreprise. Pour un environnement de test Debian 12 où cette correction n'est pas possible, un script peut déclarer temporairement les hôtes Quay comme registres non sécurisés :
+
+```bash
+sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --yes
+docker compose pull
+```
+
+Le script fusionne les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Des registres supplémentaires peuvent être passés en arguments.
+
+Après l'installation, réactivez la validation TLS :
+
+```bash
+sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --remove --yes
+```
+
+Cette option affaiblit la vérification de l'origine et de l'intégrité des images. Ne l'utilisez pas en production et ne configurez pas un domaine plus large que nécessaire.
 
 ## Vérifications
 
