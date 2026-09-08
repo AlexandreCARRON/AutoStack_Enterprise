@@ -32,6 +32,7 @@ class DockerInsecureRegistriesTests(unittest.TestCase):
         return subprocess.run(
             [
                 str(SCRIPT),
+                "--add-only",
                 "--yes",
                 "--no-restart",
                 "--config",
@@ -85,6 +86,30 @@ class DockerInsecureRegistriesTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("registre invalide", result.stderr)
+
+    def test_guided_workflow_removes_temporary_exceptions(self) -> None:
+        self.config.write_text('{"log-driver": "local"}\n', encoding="utf-8")
+
+        result = subprocess.run(
+            [
+                str(SCRIPT),
+                "--no-restart",
+                "--config",
+                str(self.config),
+            ],
+            input="\n\n\n\n\n\n\nn\n",
+            check=False,
+            capture_output=True,
+            text=True,
+            env=self.environment,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("TLS est réactivé", result.stdout)
+        self.assertEqual(
+            json.loads(self.config.read_text(encoding="utf-8")),
+            {"log-driver": "local"},
+        )
 
 
 if __name__ == "__main__":

@@ -50,17 +50,10 @@ Le Dashboard est alors disponible sur <http://127.0.0.1:9180/ui/>. Saisissez la 
 Si `docker compose pull` échoue avec `x509: certificate signed by unknown authority` parce qu'un proxy d'entreprise intercepte Quay, la correction recommandée consiste à installer l'autorité de certification de l'entreprise. Pour un environnement de test Debian 12 où cette correction n'est pas possible, un script peut déclarer temporairement les hôtes Quay comme registres non sécurisés :
 
 ```bash
-sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --yes
-docker compose pull
+sudo ./scripts/idempotent/configure-docker-insecure-registries.sh
 ```
 
-Le script fusionne les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Des registres supplémentaires peuvent être passés en arguments.
-
-Après l'installation, réactivez la validation TLS :
-
-```bash
-sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --remove --yes
-```
+Le script explique comment identifier les domaines en erreur et demande leur liste. Il fusionne ensuite les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Pendant qu'il attend, effectuez le pull dans une autre fenêtre shell. Après confirmation, le script retire les exceptions, réactive TLS, redémarre Docker et propose de démarrer la stack APISIX avec Compose. En cas d'interruption, il tente également de retirer automatiquement les exceptions avant de quitter.
 
 Cette option affaiblit la vérification de l'origine et de l'intégrité des images. Ne l'utilisez pas en production et ne configurez pas un domaine plus large que nécessaire.
 

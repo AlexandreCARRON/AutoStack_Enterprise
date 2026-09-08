@@ -4,31 +4,37 @@ set -Eeuo pipefail
 
 readonly DEFAULT_CONFIG_FILE="/etc/docker/daemon.json"
 readonly DEFAULT_REGISTRIES=("quay.io" "cdn01.quay.io")
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "${BASH_SOURCE[0]}")"
+readonly REPO_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
 CONFIG_FILE="$DEFAULT_CONFIG_FILE"
-MODE="add"
+ACTION="guided"
 RESTART_DOCKER=1
 ASSUME_YES=0
 REGISTRIES=()
+WORKFLOW_REGISTRIES=()
+TLS_EXCEPTIONS_ACTIVE=0
 
 usage() {
   cat <<'EOF'
 Usage:
   sudo ./scripts/idempotent/configure-docker-insecure-registries.sh [options] [registre...]
 
-Ajoute des hôtes à insecure-registries dans /etc/docker/daemon.json.
-Sans registre explicite, quay.io et cdn01.quay.io sont configurés.
+Sans option, lance un assistant interactif qui ouvre temporairement les
+registres nécessaires, attend la fin du pull, réactive TLS puis démarre Compose.
 
 Options:
-  --remove       Retirer les registres au lieu de les ajouter.
+  --add-only     Ajouter les registres sans lancer l'assistant interactif.
+  --remove       Retirer les registres sans lancer l'assistant interactif.
   --yes          Ne pas demander de confirmation.
   --no-restart   Modifier le fichier sans redémarrer Docker.
   --config PATH  Utiliser un autre daemon.json.
   -h, --help     Afficher cette aide.
 
 Exemples:
-  sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --yes
-  sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --yes registry.example.net
+  sudo ./scripts/idempotent/configure-docker-insecure-registries.sh
+  sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --add-only --yes registry.example.net
   sudo ./scripts/idempotent/configure-docker-insecure-registries.sh --remove --yes
 EOF
 }
@@ -38,10 +44,155 @@ fail() {
   exit 1
 }
 
+confirm() {
+  local prompt="$1"
+  local answer
+
+  while true; do
+    read -r -p "${prompt} [Y/n] " answer
+    case "$answer" in
+      ""|[yY]|[yY][eE][sS]|[oO]|[oO][uU][iI]) return 0 ;;
+      [nN]|[nN][oO]|[nN][oO][nN]) return 1 ;;
+      *) printf 'Répondez par Y ou n.\n' ;;
+    esac
+  done
+}
+
+validate_registries() {
+  local registry
+  for registry in "$@"; do
+    if [[ ! "$registry" =~ ^[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
+      fail "registre invalide : $registry"
+    fi
+  done
+}
+
+restore_tls_on_exit() {
+  local status=$?
+  trap - EXIT INT TERM
+
+  if ((TLS_EXCEPTIONS_ACTIVE)); then
+    printf '\nInterruption détectée : réactivation de TLS avant de quitter.\n' >&2
+    local options=(--remove --yes --config "$CONFIG_FILE")
+    if ((!RESTART_DOCKER)); then
+      options+=(--no-restart)
+    fi
+    "$SCRIPT_PATH" "${options[@]}" -- "${WORKFLOW_REGISTRIES[@]}" || \
+      printf 'ERREUR : TLS doit être réactivé manuellement.\n' >&2
+  fi
+
+  exit "$status"
+}
+
+guided_workflow() {
+  local known_domains
+  local domains_input
+  local wait_input
+  local options
+
+  printf '%s\n' \
+    'Cet assistant redémarre Docker puis attend pendant que vous effectuez le pull' \
+    'dans une autre fenêtre shell. Il réactive ensuite TLS automatiquement.'
+
+  if ! confirm 'Avez-vous lancé ce script dans une nouvelle fenêtre shell ?'; then
+    printf 'Ouvrez une nouvelle fenêtre shell, puis relancez le script.\n'
+    return 1
+  fi
+
+  if confirm 'Connaissez-vous déjà les domaines dont le certificat TLS est refusé ?'; then
+    known_domains=1
+  else
+    known_domains=0
+    printf '%s\n' \
+      "Dans l'autre fenêtre, lancez : sudo docker compose pull" \
+      'Repérez chaque URL associée à "x509: certificate signed by unknown authority".' \
+      'Le domaine est la partie située après https:// et avant le prochain /.' \
+      'Exemple : https://cdn01.quay.io/... donne cdn01.quay.io.'
+    read -r -p 'Appuyez sur Entrée après avoir relevé les domaines. ' wait_input
+  fi
+
+  while true; do
+    if ((known_domains)); then
+      printf 'Domaines connus, séparés par des espaces ou des virgules\n'
+    else
+      printf 'Domaines relevés, séparés par des espaces ou des virgules\n'
+    fi
+    read -r -p '[quay.io cdn01.quay.io] : ' domains_input
+    domains_input="${domains_input//,/ }"
+    if [[ -z "${domains_input//[[:space:]]/}" ]]; then
+      WORKFLOW_REGISTRIES=("${DEFAULT_REGISTRIES[@]}")
+    else
+      read -r -a WORKFLOW_REGISTRIES <<<"$domains_input"
+    fi
+    validate_registries "${WORKFLOW_REGISTRIES[@]}"
+    printf 'Domaines qui seront temporairement autorisés : %s\n' \
+      "${WORKFLOW_REGISTRIES[*]}"
+    if confirm 'Validez-vous cette liste ?'; then
+      break
+    fi
+  done
+
+  if ! confirm 'Modifier daemon.json et redémarrer Docker maintenant ?'; then
+    printf 'Aucune modification effectuée.\n'
+    return 0
+  fi
+
+  options=(--add-only --yes --config "$CONFIG_FILE")
+  if ((!RESTART_DOCKER)); then
+    options+=(--no-restart)
+  fi
+  "$SCRIPT_PATH" "${options[@]}" -- "${WORKFLOW_REGISTRIES[@]}"
+  TLS_EXCEPTIONS_ACTIVE=1
+  trap restore_tls_on_exit EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  printf '\nTLS est temporairement désactivé pour les domaines sélectionnés.\n'
+  printf '%s\n' \
+    "Dans l'autre fenêtre shell, terminez maintenant le téléchargement ou" \
+    "l'installation, par exemple avec : sudo docker compose pull"
+  read -r -p 'Une fois terminé, tapez un mot ou appuyez sur Entrée : ' wait_input
+
+  while ! confirm 'Réactiver TLS et redémarrer Docker maintenant ?'; do
+    printf '%s\n' \
+      'TLS reste temporairement désactivé.' \
+      "Terminez vos opérations dans l'autre fenêtre avant de continuer."
+    read -r -p 'Appuyez sur Entrée lorsque vous êtes prêt. ' wait_input
+  done
+
+  options=(--remove --yes --config "$CONFIG_FILE")
+  if ((!RESTART_DOCKER)); then
+    options+=(--no-restart)
+  fi
+  "$SCRIPT_PATH" "${options[@]}" -- "${WORKFLOW_REGISTRIES[@]}"
+  TLS_EXCEPTIONS_ACTIVE=0
+  trap - EXIT INT TERM
+
+  if ! confirm 'Démarrer ou réconcilier la stack Docker Compose APISIX ?'; then
+    printf 'TLS est réactivé. Démarrage Compose non demandé.\n'
+    return 0
+  fi
+
+  if [[ ! -f "${REPO_DIR}/docker-compose.yml" ]]; then
+    fail "${REPO_DIR}/docker-compose.yml est absent ; lancez d'abord ./generate-docker-compose.sh APISIX."
+  fi
+
+  docker compose \
+    --project-directory "$REPO_DIR" \
+    up -d --wait --wait-timeout 180
+  docker compose \
+    --project-directory "$REPO_DIR" \
+    ps
+}
+
 while (($#)); do
   case "$1" in
+    --add-only)
+      ACTION="add"
+      shift
+      ;;
     --remove)
-      MODE="remove"
+      ACTION="remove"
       shift
       ;;
     --yes)
@@ -76,16 +227,6 @@ while (($#)); do
   esac
 done
 
-if ((${#REGISTRIES[@]} == 0)); then
-  REGISTRIES=("${DEFAULT_REGISTRIES[@]}")
-fi
-
-for registry in "${REGISTRIES[@]}"; do
-  if [[ ! "$registry" =~ ^[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
-    fail "registre invalide : $registry"
-  fi
-done
-
 readonly OS_RELEASE_FILE="${AUTOSTACK_OS_RELEASE_FILE:-/etc/os-release}"
 [[ -r "$OS_RELEASE_FILE" ]] || fail "impossible de lire $OS_RELEASE_FILE."
 
@@ -106,19 +247,32 @@ if ((RESTART_DOCKER)) && [[ "$EUID" -ne 0 ]]; then
   fail "le redémarrage de Docker exige sudo."
 fi
 
-if [[ "$MODE" == "remove" && ! -e "$CONFIG_FILE" ]]; then
+if [[ "$ACTION" == "guided" ]]; then
+  if ((ASSUME_YES)); then
+    fail "--yes exige --add-only ou --remove."
+  fi
+  guided_workflow
+  exit $?
+fi
+
+if ((${#REGISTRIES[@]} == 0)); then
+  REGISTRIES=("${DEFAULT_REGISTRIES[@]}")
+fi
+validate_registries "${REGISTRIES[@]}"
+
+if [[ "$ACTION" == "remove" && ! -e "$CONFIG_FILE" ]]; then
   printf 'Aucune configuration à modifier dans %s.\n' "$CONFIG_FILE"
   exit 0
 fi
 
-if [[ "$MODE" == "add" && "$ASSUME_YES" -eq 0 ]]; then
+if [[ "$ACTION" == "add" && "$ASSUME_YES" -eq 0 ]]; then
   printf '%s\n' \
     'AVERTISSEMENT : cette configuration désactive la validation TLS' \
     'pour les registres indiqués et convient uniquement à un contournement temporaire.'
   printf 'Registres : %s\n' "${REGISTRIES[*]}"
   read -r -p 'Continuer ? [oui/N] ' answer
-  case "${answer,,}" in
-    oui|o|yes|y) ;;
+  case "$answer" in
+    [oO][uU][iI]|[oO]|[yY][eE][sS]|[yY]) ;;
     *)
       printf 'Opération annulée.\n'
       exit 0
@@ -131,7 +285,7 @@ mkdir -p -- "$CONFIG_DIR"
 TEMP_CONFIG="$(mktemp "${CONFIG_DIR}/.daemon.json.XXXXXX")"
 trap 'rm -f -- "$TEMP_CONFIG"' EXIT
 
-python3 - "$CONFIG_FILE" "$TEMP_CONFIG" "$MODE" "${REGISTRIES[@]}" <<'PY'
+python3 - "$CONFIG_FILE" "$TEMP_CONFIG" "$ACTION" "${REGISTRIES[@]}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -189,7 +343,7 @@ fi
 
 BACKUP_FILE=""
 if [[ -f "$CONFIG_FILE" ]]; then
-  BACKUP_FILE="${CONFIG_FILE}.backup.$(date -u +%Y%m%dT%H%M%SZ)"
+  BACKUP_FILE="${CONFIG_FILE}.backup.$(date -u +%Y%m%dT%H%M%SZ).${BASHPID:-$$}"
   cp -a -- "$CONFIG_FILE" "$BACKUP_FILE"
   printf 'Sauvegarde créée : %s\n' "$BACKUP_FILE"
 fi
@@ -213,7 +367,7 @@ else
   printf "Docker n'a pas été redémarré (--no-restart).\n"
 fi
 
-if [[ "$MODE" == "add" ]]; then
+if [[ "$ACTION" == "add" ]]; then
   printf 'Validation TLS désactivée pour : %s\n' "${REGISTRIES[*]}"
 else
   printf 'Registres retirés de insecure-registries : %s\n' "${REGISTRIES[*]}"
