@@ -2,17 +2,18 @@
 id: autostack.versions
 kind: fact
 status: active
-last_reviewed: 2026-07-17
+last_reviewed: 2026-09-08
 sensitivity: public
-sources: ["https://hub.docker.com/", "https://github.com/nextcloud/all-in-one/blob/main/compose.yaml"]
+sources: ["https://hub.docker.com/", "https://github.com/nextcloud/all-in-one/blob/main/compose.yaml", "https://apisix.apache.org/downloads/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml"]
 ---
 
 # Catalogue des versions
 
-Versions vérifiées le 17 juillet 2026. Le nom court d'un service sélectionne la variante indiquée par son fichier `default-version`. Une variante historique doit être appelée avec son chemin complet, par exemple `Odoo/Odoo_v17`.
+Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.18.0 a été vérifié le 8 septembre 2026. Le nom court d'un service sélectionne la variante indiquée par son fichier `default-version`. Une variante historique doit être appelée avec son chemin complet, par exemple `Odoo/Odoo_v17`.
 
 | Service | Variante par défaut | Variantes conservées | Référence officielle |
 | --- | --- | --- | --- |
+| Apache APISIX | `APISIX_v3.18.0` | `APISIX_legacy-unpinned` | [APISIX 3.18.0](https://apisix.apache.org/blog/2026/08/20/release-apache-apisix-3.18.0/) |
 | Elasticsearch + Kibana | `Elasticsearch-Kibana_v9.4.2` | `Elasticsearch-Kibana_v8.15.1` | [Elastic 9.4.2](https://www.elastic.co/downloads/elasticsearch) |
 | Jenkins | `Jenkins_v2.573` | `Jenkins_v2.555.3-LTS`, `Jenkins_legacy-lts` | [Jenkins Docker](https://hub.docker.com/r/jenkins/jenkins/tags/) |
 | n8n | `N8N_v2.30.5` | `N8N_legacy-unpinned` | [n8n 2.30.5](https://github.com/n8n-io/n8n/releases/tag/n8n%402.30.5) |

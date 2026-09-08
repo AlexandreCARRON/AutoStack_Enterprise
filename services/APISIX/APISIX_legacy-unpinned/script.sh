@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Installateur POC historique incomplet, conservé uniquement pour référence.
+
 ###############################################################################
 # APISIX POC INSTALLER
 # Debian 12
@@ -152,3 +154,6 @@ EOF
 
     echo "Configuration générée :"
     cat "$APISIX_ROOT/conf/config.yaml"
+fi
+
+echo "POC historique incomplet : utilisez ../Apisix_v3.18.0."

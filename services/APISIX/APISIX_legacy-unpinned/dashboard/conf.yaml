@@ -1,3 +1,4 @@
+# Configuration historique du Dashboard séparé, conservée pour référence.
 conf:
   listen:
     host: 0.0.0.0

@@ -2,9 +2,9 @@
 id: autostack.migrations
 kind: guide
 status: active
-last_reviewed: 2026-08-03
+last_reviewed: 2026-09-08
 sensitivity: public
-sources: ["../VERSIONS.md"]
+sources: ["../VERSIONS.md", "https://apisix.apache.org/docs/apisix/dashboard/", "https://apisix.apache.org/blog/2026/08/20/release-apache-apisix-3.18.0/"]
 ---
 
 # Migrations
@@ -21,6 +21,19 @@ Avant tout changement de variante :
 6. valider fonctionnellement avant de supprimer les anciennes données.
 
 Un retour à l'ancienne image ne garantit pas un rollback lorsque la nouvelle version a modifié le schéma de base.
+
+## APISIX non épinglé vers APISIX 3.18.0
+
+La variante historique utilisait des images flottantes et un Dashboard séparé. Il est donc impossible de déduire sa version APISIX exacte depuis le dépôt seul.
+
+- relever la version du conteneur existant avec `apisix version` avant toute migration ;
+- créer un snapshot etcd et vérifier qu'il peut être restauré ;
+- lire les notes de chaque version intermédiaire et les changements incompatibles de 3.18.0 ;
+- tester la restauration du snapshot dans le volume `apisix_3180_etcd_data` sur un environnement isolé ;
+- remplacer le Dashboard séparé par l'interface embarquée disponible sur `/ui/` ;
+- conserver la clé Admin API existante ou mettre à jour tous ses consommateurs de façon coordonnée.
+
+Ne montez pas directement l'ancien répertoire etcd sur la nouvelle variante sans sauvegarde et essai de restauration. La variante `APISIX_legacy-unpinned` reste une référence historique, pas une cible de rollback garantie.
 
 ## PostgreSQL
 

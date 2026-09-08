@@ -86,4 +86,16 @@ COMPOSE_OUTPUT="${tmp_dir}/nextcloud33.yml" ENV_OUTPUT="${tmp_dir}/nextcloud33.e
   "$GENERATOR" Z_Nextcloud/Nextcloud_v33.0.6 >/dev/null
 grep -q '^NEXTCLOUD_IMAGE=nextcloud:33.0.6-apache$' "${tmp_dir}/nextcloud33.env"
 
+COMPOSE_OUTPUT="${tmp_dir}/apisix.yml" ENV_OUTPUT="${tmp_dir}/apisix.env" \
+  "$GENERATOR" APISIX >/dev/null
+grep -q '^  apisix-etcd:' "${tmp_dir}/apisix.yml"
+grep -q '^  apisix:' "${tmp_dir}/apisix.yml"
+grep -q '^  apisix-control:' "${tmp_dir}/apisix.yml"
+grep -q '^APISIX_IMAGE=apache/apisix:3.18.0-debian$' "${tmp_dir}/apisix.env"
+grep -q '^APISIX_ETCD_IMAGE=quay.io/coreos/etcd:v3.5.18$' "${tmp_dir}/apisix.env"
+if grep -q '^  apisix-dashboard:' "${tmp_dir}/apisix.yml"; then
+  echo "La variante APISIX récente doit utiliser le Dashboard embarqué." >&2
+  exit 1
+fi
+
 echo "Tests du générateur : OK"

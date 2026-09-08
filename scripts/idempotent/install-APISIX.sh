@@ -1,150 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -euo pipefail
+set -Eeuo pipefail
 
-NETWORK_NAME="apisix"
-ETCD_IP="172.18.5.10"
-APISIX_IP="172.18.5.11"
+readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+readonly VARIANT_DIR="${REPO_DIR}/services/APISIX/APISIX_v3.18.0"
+readonly ENV_FILE="${APISIX_ENV_FILE:-${VARIANT_DIR}/.env}"
 
-echo "====================================="
-echo "Nettoyage"
-echo "====================================="
+if [[ ! -f "$ENV_FILE" ]]; then
+  cp -- "${VARIANT_DIR}/.env.example" "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+  printf 'Configuration créée : %s\n' "$ENV_FILE"
+  printf 'Remplacez APISIX_ADMIN_KEY, puis relancez ce script.\n' >&2
+  exit 1
+fi
 
-docker rm -f test-api-gateway etcd-server 2>/dev/null || true
-docker network rm ${NETWORK_NAME} 2>/dev/null || true
+if grep -Eq '^[A-Z0-9_]+=.*CHANGE_ME' "$ENV_FILE"; then
+  printf 'Erreur : remplacez toutes les valeurs CHANGE_ME dans %s.\n' "$ENV_FILE" >&2
+  exit 1
+fi
 
-echo "====================================="
-echo "Création du réseau"
-echo "====================================="
+docker compose \
+  --project-directory "$REPO_DIR" \
+  --env-file "$ENV_FILE" \
+  -f "${VARIANT_DIR}/docker-compose.yml" \
+  config --quiet
 
-docker network create \
-    --driver bridge \
-    --subnet=172.18.0.0/16 \
-    --ip-range=172.18.5.0/24 \
-    --gateway=172.18.5.254 \
-    ${NETWORK_NAME}
+docker compose \
+  --project-directory "$REPO_DIR" \
+  --env-file "$ENV_FILE" \
+  -f "${VARIANT_DIR}/docker-compose.yml" \
+  pull
 
-mkdir -p apisix_conf
-mkdir -p apisix_logs
+docker compose \
+  --project-directory "$REPO_DIR" \
+  --env-file "$ENV_FILE" \
+  -f "${VARIANT_DIR}/docker-compose.yml" \
+  up -d --wait
 
-echo "====================================="
-echo "Configuration APISIX"
-echo "====================================="
-
-cat > apisix_conf/config.yaml <<EOF
-deployment:
-  role: traditional
-
-  admin:
-    allow_admin:
-      - 0.0.0.0/0
-
-    admin_key:
-      -
-        name: admin
-        key: edd1c9f034335f136f87ad84b625c8f1
-        role: admin
-
-  etcd:
-    host:
-      - "http://${ETCD_IP}:2379"
-EOF
-
-echo "====================================="
-echo "Téléchargement des images"
-echo "====================================="
-
-docker pull quay.io/coreos/etcd:v3.5.18
-docker pull apache/apisix:latest
-
-echo "====================================="
-echo "Démarrage ETCD"
-echo "====================================="
-
-docker run -d \
-  --name etcd-server \
-  --network ${NETWORK_NAME} \
-  --ip ${ETCD_IP} \
-  -p 2379:2379 \
-  -p 2380:2380 \
-  quay.io/coreos/etcd:v3.5.18 \
-  /usr/local/bin/etcd \
-  --name etcd0 \
-  --advertise-client-urls http://0.0.0.0:2379 \
-  --listen-client-urls http://0.0.0.0:2379
-
-echo "Attente ETCD..."
-sleep 15
-
-echo "====================================="
-echo "Test ETCD"
-echo "====================================="
-
-curl http://localhost:2379/version
-echo ""
-
-echo "====================================="
-echo "Démarrage APISIX"
-echo "====================================="
-
-docker run -d \
-  --name test-api-gateway \
-  --network ${NETWORK_NAME} \
-  --ip ${APISIX_IP} \
-  -p 9080:9080 \
-  -p 9091:9091 \
-  -p 9443:9443 \
-  -v "$(pwd)/apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml" \
-  -v "$(pwd)/apisix_logs:/usr/local/apisix/logs" \
-  apache/apisix:latest
-
-echo "Attente APISIX..."
-sleep 30
-
-echo "====================================="
-echo "Containers actifs"
-echo "====================================="
-
-docker ps
-
-echo "====================================="
-echo "Test Admin API"
-echo "====================================="
-
-curl -s \
-  -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
-  http://127.0.0.1:9180/apisix/admin/routes
-
-echo ""
-echo "====================================="
-echo "Création d'une route"
-echo "====================================="
-
-curl -i \
-  http://127.0.0.1:9180/apisix/admin/routes/1 \
-  -X PUT \
-  -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1" \
-  -d '
-{
-  "uri":"/get",
-  "upstream":{
-    "type":"roundrobin",
-    "nodes":{
-      "httpbin.org:80":1
-    }
-  }
-}'
-
-echo ""
-echo "====================================="
-echo "Test de la route"
-echo "====================================="
-
-sleep 5
-
-curl -i http://127.0.0.1:9080/get
-
-echo ""
-echo "====================================="
-echo "Déploiement terminé"
-echo "====================================="
+docker compose \
+  --project-directory "$REPO_DIR" \
+  --env-file "$ENV_FILE" \
+  -f "${VARIANT_DIR}/docker-compose.yml" \
+  ps

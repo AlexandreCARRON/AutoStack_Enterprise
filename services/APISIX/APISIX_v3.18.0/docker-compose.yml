@@ -1,0 +1,55 @@
+services:
+  apisix-etcd:
+    image: ${APISIX_ETCD_IMAGE:?Définir APISIX_ETCD_IMAGE}
+    restart: unless-stopped
+    command:
+      - /usr/local/bin/etcd
+      - --name=apisix-etcd
+      - --data-dir=/etcd-data
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --advertise-client-urls=http://apisix-etcd:2379
+    volumes:
+      - apisix_3180_etcd_data:/etcd-data
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    networks:
+      - apisix-control
+    security_opt:
+      - no-new-privileges:true
+
+  apisix:
+    image: ${APISIX_IMAGE:?Définir APISIX_IMAGE}
+    restart: unless-stopped
+    environment:
+      APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY:?Définir APISIX_ADMIN_KEY}
+    volumes:
+      - ./services/APISIX/APISIX_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+    ports:
+      - "${APISIX_HTTP_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTP_PORT:-9080}:9080/tcp"
+      - "${APISIX_HTTPS_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTPS_PORT:-9443}:9443/tcp"
+      - "${APISIX_ADMIN_BIND_ADDRESS:-127.0.0.1}:${APISIX_ADMIN_PORT:-9180}:9180/tcp"
+    depends_on:
+      apisix-etcd:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "apisix", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - default
+      - apisix-control
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  apisix_3180_etcd_data:
+
+networks:
+  apisix-control:
+    internal: true

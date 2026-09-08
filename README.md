@@ -2,7 +2,7 @@
 id: autostack.readme
 kind: guide
 status: active
-last_reviewed: 2026-08-03
+last_reviewed: 2026-09-08
 sensitivity: public
 sources: ["docs/README.md", "VERSIONS.md"]
 ---
@@ -89,6 +89,7 @@ Les versions proposées, les variantes historiques et les exceptions non version
 - [Guide de contribution](CONTRIBUTING.md)
 - [Politique de sécurité](SECURITY.md)
 - [Catalogue des versions](VERSIONS.md)
+- [Guide Apache APISIX](services/APISIX/README.md)
 
 Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
 
