@@ -148,7 +148,7 @@ services:
       XPACK_MONITORING_ENABLED: "false"
     mem_limit: ${LOGSTASH_MEMORY:-768m}
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./services/APISIX/APISIX_demo_v3.18.0/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     depends_on:
       elasticsearch:
         condition: service_healthy
