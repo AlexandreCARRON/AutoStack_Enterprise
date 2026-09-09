@@ -11,8 +11,6 @@ sources: ["services/APISIX/APISIX_v3.18.0/fichiers/AutoStack_Demo_APISIX.xlsx", 
 
 Cette variante complète la stack APISIX minimale avec deux API fictives et une chaîne d'observabilité. Elle est conçue pour une VM Debian 12 de démonstration, pas pour la production.
 
-## Ce que la démonstration prouve
-
 ```mermaid
 flowchart LR
     P[Partenaire A simulé] -->|X-API-Key| A[APISIX]
@@ -61,7 +59,7 @@ sudo apt update
 sudo apt install -y python3 openssl curl jq
 ```
 
-Le lanceur vérifie `vm.max_map_count` et propose de l'appliquer temporairement. Pour rendre le réglage persistant après validation par votre administrateur :
+Le lanceur vérifie `vm.max_map_count` et propose de l'appliquer temporairement. Pour rendre le réglage persistant après validation par l'administrateur :
 
 ```bash
 echo 'vm.max_map_count=1048576' | sudo tee /etc/sysctl.d/99-elasticsearch.conf
