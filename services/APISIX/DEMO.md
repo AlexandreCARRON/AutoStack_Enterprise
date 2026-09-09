@@ -52,6 +52,12 @@ Les clients éphémères `partner-client` et `si-client` lancent les scénarios 
 - au moins 4 vCPU, 8 Go de RAM et 30 Go de disque recommandés pour l'ensemble de la démonstration ;
 - `vm.max_map_count=1048576` pour Elasticsearch 9.
 
+Connaitre la clé Admin pour APISIX :
+
+```bash
+grep '^APISIX_ADMIN_KEY=' services/APISIX/APISIX_demo_v3.18.0/.env
+```
+
 Installation des utilitaires manquants :
 
 ```bash
