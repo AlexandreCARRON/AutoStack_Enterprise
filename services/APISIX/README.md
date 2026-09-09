@@ -2,7 +2,7 @@
 id: autostack.apisix
 kind: guide
 status: active
-last_reviewed: 2026-09-08
+last_reviewed: 2026-09-09
 sensitivity: public
 sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
 ---
@@ -19,6 +19,12 @@ La variante par défaut déploie Apache APISIX 3.18.0 et etcd 3.5.18. Elle utili
 - le réseau interne `apisix-control` transporte uniquement les échanges APISIX ↔ etcd.
 
 Les adresses et ports hôtes sont configurables dans `.env`. L'Admin API exige toujours `APISIX_ADMIN_KEY`.
+
+## Démonstration d'interconnexion complète
+
+La variante `APISIX_demo_v3.18.0` ajoute une API interne fictive, un partenaire HTTPS avec mTLS et une chaîne Logstash → Elasticsearch → Kibana. Elle exploite le classeur fourni pour générer les objets APISIX sans modifier la variante minimale par défaut.
+
+Le [guide de démonstration](DEMO.md) décrit l'architecture, le démarrage automatisé, l'accès depuis VirtualBox et les scénarios de validation.
 
 ## Démarrage recommandé
 

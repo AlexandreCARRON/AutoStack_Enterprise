@@ -13,6 +13,8 @@ secret_*.txt
 **/docker.sock
 .docker/
 node_modules/
+__pycache__/
+*.py[cod]
 certs/
 conf.d/
 data/
