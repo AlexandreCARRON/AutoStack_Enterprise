@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 APISIX_ROOT = Path(__file__).resolve().parents[1]
+GENERATED_DIRECTORIES = {"__pycache__", ".mypy_cache", ".pytest_cache"}
 
 
 class ApisixReadmeTests(unittest.TestCase):
@@ -12,6 +13,8 @@ class ApisixReadmeTests(unittest.TestCase):
             if not path.is_file():
                 continue
             relative_parts = path.relative_to(APISIX_ROOT).parts
+            if any(part in GENERATED_DIRECTORIES for part in relative_parts):
+                continue
             if "runtime" in relative_parts and any(part in {"certs", "generated"} for part in relative_parts):
                 continue
             directory = path.parent
