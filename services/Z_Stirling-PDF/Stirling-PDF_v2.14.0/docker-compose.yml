@@ -1,3 +1,4 @@
+services:
   stirling-pdf:
     image: ${STIRLING_PDF_IMAGE:?Définir STIRLING_PDF_IMAGE}
     restart: unless-stopped

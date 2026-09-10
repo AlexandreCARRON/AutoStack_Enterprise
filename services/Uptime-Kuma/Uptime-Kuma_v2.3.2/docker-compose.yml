@@ -1,3 +1,4 @@
+services:
   uptime-kuma:
     image: ${UPTIME_KUMA_IMAGE:?Définir UPTIME_KUMA_IMAGE}
     restart: unless-stopped

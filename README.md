@@ -49,8 +49,8 @@ Les contributions concernant le code, la documentation et les retours constructi
 3. Rendez-vous dans le dossier nouvellement créé : `cd AutoStack_Enterprise`.
 4. Créez votre configuration locale : `cp .env.example .env`.
 5. Remplacez toutes les valeurs `CHANGE_ME` et adaptez l'utilisateur ainsi que le port SSH : `nano .env`.
-6. Rendez le script exécutable : `chmod +x script-conf-server-D12.sh`.
-7. Exécutez ensuite le script : `sudo ./script-conf-server-D12.sh`.
+6. Rendez le script exécutable : `chmod +x scripts/script-conf-server-D12.sh`.
+7. Exécutez ensuite le script : `sudo ./scripts/script-conf-server-D12.sh`.
 
 > **Attention :** le script modifie le port SSH selon `NEW_PORT_SSH`. Gardez une session ouverte jusqu'à avoir vérifié une nouvelle connexion.
 
@@ -61,22 +61,35 @@ Se rendre dans le dossier Git nouvellement copié : `cd AutoStack_Enterprise`.
 Le générateur assemble uniquement les services demandés. Il crée un fichier `.env` privé lors de la première exécution et y ajoute ensuite les variables manquantes sans remplacer les valeurs existantes. Chaque dossier de service contient un fichier `default-version` qui désigne la variante utilisée lorsqu'aucune version n'est précisée.
 
 ```bash
-./generate-docker-compose.sh NomService1 NomService2
+./scripts/generate-docker-compose.sh NomService1 NomService2
 ```
 
 Exemple pour déployer Nginx Proxy Manager et Odoo :
 
 ```bash
-./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
+./scripts/generate-docker-compose.sh Nginx-Proxy-Manager Odoo
 ```
 
 Pour sélectionner explicitement une ancienne version :
 
 ```bash
-./generate-docker-compose.sh Nginx-Proxy-Manager/Nginx-Proxy-Manager_v2.15.0 Odoo/Odoo_v17
+./scripts/generate-docker-compose.sh Nginx-Proxy-Manager/Nginx-Proxy-Manager_v2.15.0 Odoo/Odoo_v17
 ```
 
 Les versions proposées, les variantes historiques et les exceptions non versionnées sont recensées dans [VERSIONS.md](VERSIONS.md).
+
+### Exécuter un service copié isolément
+
+Chaque variante Compose peut aussi être lancée sans le reste du dépôt. Après avoir copié le dossier du service, entrez dans la variante souhaitée :
+
+```bash
+cd N8N_v2.30.5
+cp .env.example .env
+docker compose --env-file .env -f docker-compose.yml config --quiet
+docker compose --env-file .env -f docker-compose.yml up -d
+```
+
+Remplacez d'abord les valeurs `CHANGE_ME`. Les scripts, tests, configurations et bind mounts suivis par Git restent sous la racine du service. Lors d'un assemblage global, le générateur renseigne automatiquement les variables `AUTOSTACK_<SERVICE>_DIR` correspondantes.
 
 ## Documentation
 
@@ -94,7 +107,7 @@ Les versions proposées, les variantes historiques et les exceptions non version
 Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
 
 ```bash
-FORCE=1 ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo
+FORCE=1 ./scripts/generate-docker-compose.sh Nginx-Proxy-Manager Odoo
 ```
 
 Avant le déploiement, remplacez toutes les valeurs `CHANGE_ME` dans `.env`, puis validez la configuration :
@@ -118,7 +131,7 @@ La variante par défaut utilise Odoo 19. La variante `Odoo/Odoo_v17` conserve Od
 
 Avant une montée majeure, sauvegardez la base et le filestore, demandez une base de test migrée, puis adaptez `ODOO_IMAGE` uniquement après validation. Consultez la [documentation officielle de mise à niveau Odoo](https://www.odoo.com/documentation/19.0/administration/upgrade.html).
 
-Odoo 17 et Odoo 19 utilisent des volumes nommés distincts. Une installation existante basée sur `volumes/postgresql/data` ou `volumes/Odoo/odoo-web-data-client` doit être sauvegardée et migrée explicitement avant le premier démarrage de la nouvelle variante.
+Odoo 17 et Odoo 19 utilisent des volumes nommés distincts. Une installation existante basée sur `services/Odoo/volumes/postgresql/data` ou `services/Odoo/volumes/odoo-web-data-client` doit être sauvegardée et migrée explicitement avant le premier démarrage de la nouvelle variante.
 
 `ODOO_LIST_DB=True` permet l'initialisation d'une nouvelle instance. Après création et validation de la base, passez cette variable à `False` et conservez un `ODOO_DB_FILTER` restrictif afin de désactiver le gestionnaire de bases public.
 

@@ -27,7 +27,7 @@ services:
     environment:
       APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY:?Définir APISIX_ADMIN_KEY}
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
     ports:
       - "${APISIX_HTTP_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTP_PORT:-9080}:9080/tcp"
       - "${APISIX_HTTPS_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTPS_PORT:-9443}:9443/tcp"
@@ -54,7 +54,8 @@ services:
 
   internal-api:
     build:
-      context: ./services/APISIX/APISIX_demo_v3.18.0/demo-api
+      context: ${AUTOSTACK_APISIX_DIR:-..}/scripts
+      dockerfile: Dockerfile.demo-api
       args:
         DEMO_API_IMAGE: ${DEMO_API_IMAGE:-python:3.12-slim-bookworm}
     restart: unless-stopped
@@ -79,7 +80,8 @@ services:
 
   partner-api:
     build:
-      context: ./services/APISIX/APISIX_demo_v3.18.0/demo-api
+      context: ${AUTOSTACK_APISIX_DIR:-..}/scripts
+      dockerfile: Dockerfile.demo-api
       args:
         DEMO_API_IMAGE: ${DEMO_API_IMAGE:-python:3.12-slim-bookworm}
     restart: unless-stopped
@@ -92,11 +94,11 @@ services:
       DEMO_TLS_KEY: /certs/partner-server.key
       DEMO_TLS_CLIENT_CA: /certs/demo-ca.crt
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/demo-ca.crt:/certs/demo-ca.crt:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/partner-server.crt:/certs/partner-server.crt:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/partner-server.key:/certs/partner-server.key:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/apisix-client.crt:/certs/apisix-client.crt:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/apisix-client.key:/certs/apisix-client.key:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/demo-ca.crt:/certs/demo-ca.crt:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/partner-server.crt:/certs/partner-server.crt:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/partner-server.key:/certs/partner-server.key:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/apisix-client.crt:/certs/apisix-client.crt:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/apisix-client.key:/certs/apisix-client.key:ro
     healthcheck:
       test:
         - CMD-SHELL
@@ -148,7 +150,7 @@ services:
       XPACK_MONITORING_ENABLED: "false"
     mem_limit: ${LOGSTASH_MEMORY:-768m}
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -181,7 +183,7 @@ services:
       API_KEY: ${DEMO_PARTNER_API_KEY:?Définir DEMO_PARTNER_API_KEY}
       EXPECTED_STATUS: "200"
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/demo-client/client.py:/demo/client.py:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/scripts/client.py:/demo/client.py:ro
     entrypoint: ["python", "/demo/client.py"]
     networks:
       - demo-entry
@@ -197,7 +199,7 @@ services:
       API_KEY: ${DEMO_INTERNAL_API_KEY:?Définir DEMO_INTERNAL_API_KEY}
       EXPECTED_STATUS: "200"
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/demo-client/client.py:/demo/client.py:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/scripts/client.py:/demo/client.py:ro
     entrypoint: ["python", "/demo/client.py"]
     networks:
       - demo-si-entry
@@ -217,10 +219,10 @@ services:
       KIBANA_URL: http://kibana:5601
       LOGSTASH_URL: http://logstash:8080
     volumes:
-      - ./services/APISIX/APISIX_demo_v3.18.0/bootstrap/bootstrap.py:/demo/bootstrap.py:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/generated:/demo/generated:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/apisix-client.crt:/demo/certs/apisix-client.crt:ro
-      - ./services/APISIX/APISIX_demo_v3.18.0/runtime/certs/apisix-client.key:/demo/certs/apisix-client.key:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/scripts/bootstrap.py:/demo/bootstrap.py:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/generated:/demo/generated:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/apisix-client.crt:/demo/certs/apisix-client.crt:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/runtime/certs/apisix-client.key:/demo/certs/apisix-client.key:ro
     command: ["python", "/demo/bootstrap.py"]
     depends_on:
       apisix:

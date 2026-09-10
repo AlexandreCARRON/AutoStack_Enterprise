@@ -1,3 +1,4 @@
+services:
   portainer:
     image: ${PORTAINER_IMAGE:?Définir PORTAINER_IMAGE}
     restart: unless-stopped

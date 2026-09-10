@@ -1,3 +1,4 @@
+services:
   backup_cron:
     image: ${BORG_BACKUP_IMAGE:?Définir BORG_BACKUP_IMAGE}
     restart: unless-stopped

@@ -1,3 +1,4 @@
+services:
   web-check:
     image: ${WEB_CHECK_IMAGE:?Définir WEB_CHECK_IMAGE}
     restart: unless-stopped

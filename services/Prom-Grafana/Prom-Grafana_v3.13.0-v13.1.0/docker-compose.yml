@@ -1,3 +1,4 @@
+services:
   prometheus:
     image: ${PROMETHEUS_IMAGE:?Définir PROMETHEUS_IMAGE}
     restart: unless-stopped
@@ -7,7 +8,7 @@
     ports:
       - "${PROMETHEUS_BIND_ADDRESS:-127.0.0.1}:${PROMETHEUS_PORT}:9090"
     volumes:
-      - ./volumes/Prom-Grafana/prometheus:/etc/prometheus:ro
+      - ${AUTOSTACK_PROM_GRAFANA_DIR:-..}/volumes/prometheus:/etc/prometheus:ro
       - prometheus_3_data:/prometheus
     security_opt:
       - no-new-privileges:true
@@ -21,7 +22,7 @@
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:?Définir GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:?Définir GF_SECURITY_ADMIN_PASSWORD}
     volumes:
-      - ./volumes/Prom-Grafana/grafana:/etc/grafana/provisioning/datasources:ro
+      - ${AUTOSTACK_PROM_GRAFANA_DIR:-..}/volumes/grafana:/etc/grafana/provisioning/datasources:ro
       - grafana_13_data:/var/lib/grafana
     security_opt:
       - no-new-privileges:true

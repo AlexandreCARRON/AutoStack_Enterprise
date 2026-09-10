@@ -1,3 +1,4 @@
+services:
   postgres_n8n:
     image: ${POSTGRES_IMAGE_N8N:?Définir POSTGRES_IMAGE_N8N}
     restart: unless-stopped
@@ -10,7 +11,7 @@
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
     volumes:
       - n8n_2305_db_data:/var/lib/postgresql
-      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
+      - ${AUTOSTACK_N8N_DIR:-..}/scripts/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s

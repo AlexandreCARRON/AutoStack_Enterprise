@@ -4,7 +4,7 @@ kind: guide
 status: active
 last_reviewed: 2026-08-03
 sensitivity: public
-sources: ["../generate-docker-compose.sh", "../SECURITY.md"]
+sources: ["../scripts/generate-docker-compose.sh", "../SECURITY.md"]
 ---
 
 # Déploiement
@@ -14,19 +14,19 @@ sources: ["../generate-docker-compose.sh", "../SECURITY.md"]
 Le nom court sélectionne la version indiquée par `default-version` :
 
 ```bash
-./generate-docker-compose.sh Odoo
+./scripts/generate-docker-compose.sh Odoo
 ```
 
 Une ancienne version se sélectionne avec son chemin relatif sous `services/` :
 
 ```bash
-./generate-docker-compose.sh Odoo/Odoo_v17
+./scripts/generate-docker-compose.sh Odoo/Odoo_v17
 ```
 
 Plusieurs outils peuvent être assemblés :
 
 ```bash
-./generate-docker-compose.sh \
+./scripts/generate-docker-compose.sh \
   Nginx-Proxy-Manager \
   Odoo/Odoo_v19 \
   N8N/N8N_v2.30.5
@@ -74,7 +74,7 @@ docker compose ps
 Le générateur protège le fichier Compose existant. Pour le remplacer volontairement :
 
 ```bash
-FORCE=1 ./generate-docker-compose.sh Odoo N8N
+FORCE=1 ./scripts/generate-docker-compose.sh Odoo N8N
 ```
 
 Les valeurs déjà présentes dans `.env` sont conservées et seules les variables manquantes sont ajoutées.

@@ -27,7 +27,7 @@ services:
       - etcd
 
     volumes:
-      - ./apisix/config.yaml:/usr/local/apisix/conf/config.yaml
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_legacy-unpinned/apisix/config.yaml:/usr/local/apisix/conf/config.yaml
 
     ports:
       - "9080:9080"
@@ -46,7 +46,7 @@ services:
       - etcd
 
     volumes:
-      - ./dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_legacy-unpinned/dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
 
     ports:
       - "9000:9000"

@@ -1,10 +1,11 @@
+services:
   #******************************** UPTIME-KUMA ****************************************************************************************************
 
   uptime-kuma:                         # Application de monitoring permettant de vérifier que vos serveurs ou services sont UP, peut envoyer des alertes (mail ou autre) automatiquement en cas de souci. plus simple que Graphana à  mettre en place mais plus limité
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
     volumes:
-      - ./volumes/Uptime-kuma/uptime-kuma-data:/app/data
+      - ${AUTOSTACK_UPTIME_KUMA_DIR:-..}/volumes/uptime-kuma-data:/app/data
     ports:
       - "${PORT_MNGT_KUMA}:3001"
     restart: unless-stopped

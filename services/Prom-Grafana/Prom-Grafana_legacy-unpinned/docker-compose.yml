@@ -1,3 +1,4 @@
+services:
 ################################################################ PROMETHEUS & GRAFANA ##############################################################
   prometheus:
     image: prom/prometheus
@@ -8,7 +9,7 @@
       - ${PROMETHEUS_PORT}:9090
     restart: unless-stopped
     volumes:
-      - ./volumes/Prom-Grafana/prometheus:/etc/prometheus
+      - ${AUTOSTACK_PROM_GRAFANA_DIR:-..}/volumes/prometheus:/etc/prometheus
       - prom_data:/prometheus
 
   grafana:
@@ -21,6 +22,6 @@
       - GF_SECURITY_ADMIN_USER
       - GF_SECURITY_ADMIN_PASSWORD
     volumes:
-      - ./volumes/Prom-Grafana/grafana:/etc/grafana/provisioning/datasources
+      - ${AUTOSTACK_PROM_GRAFANA_DIR:-..}/volumes/grafana:/etc/grafana/provisioning/datasources
 volumes:
   prom_data:

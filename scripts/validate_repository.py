@@ -43,6 +43,8 @@ LINK_RE = re.compile(r"(?<!!)\[[^]]+\]\(([^)]+)\)")
 PRIVATE_KEY_RE = re.compile(
     rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"
 )
+SCRIPT_SUFFIXES = {".py", ".ps1", ".sh"}
+COMPOSE_FILENAMES = {"docker-compose.yml", "dockercompose.yml"}
 
 
 def parse_front_matter(path: Path) -> tuple[dict[str, object], list[str]]:
@@ -217,11 +219,67 @@ def validate_secret_hygiene(root: Path = REPO_ROOT) -> list[str]:
     return errors
 
 
+def validate_script_layout(root: Path = REPO_ROOT) -> list[str]:
+    errors: list[str] = []
+    candidates = [
+        *(path for path in root.iterdir() if path.is_file()),
+        *(root / "volumes").rglob("*"),
+        *(root / "services").glob("*/*"),
+        *(root / "App").glob("*/*"),
+        *(root / "host").glob("*/*"),
+    ]
+    for path in candidates:
+        if path.is_file() and path.suffix.lower() in SCRIPT_SUFFIXES:
+            errors.append(
+                f"{path.relative_to(root)}: script hors d'un dossier scripts"
+            )
+
+    # Les programmes Python d'un composant suivent la même convention, même
+    # lorsqu'ils sont copiés ou montés dans un conteneur par Compose.
+    for area in ("services", "App", "host"):
+        area_root = root / area
+        if not area_root.is_dir():
+            continue
+        for component_root in (path for path in area_root.iterdir() if path.is_dir()):
+            scripts_root = component_root / "scripts"
+            tests_root = component_root / "tests"
+            for path in component_root.rglob("*.py"):
+                if scripts_root not in path.parents and tests_root not in path.parents:
+                    errors.append(
+                        f"{path.relative_to(root)}: fichier Python hors des dossiers scripts ou tests du composant"
+                    )
+    return errors
+
+
+def validate_service_autonomy(root: Path = REPO_ROOT) -> list[str]:
+    errors: list[str] = []
+    services_root = root / "services"
+    if not services_root.is_dir():
+        return errors
+
+    for path in services_root.rglob("*"):
+        if not path.is_file() or path.name not in COMPOSE_FILENAMES:
+            continue
+        content = path.read_text(encoding="utf-8")
+        if not re.search(r"^services:\s*$", content, flags=re.MULTILINE):
+            errors.append(f"{path.relative_to(root)}: section Compose services absente")
+        for number, line in enumerate(content.splitlines(), start=1):
+            if line.lstrip().startswith("#"):
+                continue
+            if "./services/" in line or "./volumes/" in line:
+                errors.append(
+                    f"{path.relative_to(root)}:{number}: chemin dépendant de la racine du dépôt"
+                )
+    return errors
+
+
 def main() -> int:
     errors = [
         *validate_documents(),
         *validate_default_versions(),
         *validate_secret_hygiene(),
+        *validate_script_layout(),
+        *validate_service_autonomy(),
     ]
     if errors:
         print("Validation du dépôt: ECHEC")
@@ -230,7 +288,7 @@ def main() -> int:
         return 1
     print(
         "Validation du dépôt: OK "
-        "(documents maintenus, versions par défaut, hygiène des secrets)"
+        "(documents, versions, secrets, rangement et autonomie des services)"
     )
     return 0
 

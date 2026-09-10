@@ -1,3 +1,4 @@
+services:
   #******************************** PORTAINER ****************************************************************************************************
 
   portainer:  # Permet de visualiser et gérer vos conteneurs et volumes via une interface web simplifiée
@@ -7,7 +8,7 @@
     ports:
       - "${PORT_MNGT_PORTAINER}:9443" # port pour taper l'interface de management
     volumes:
-      - ./volumes/Portainer/data:/data
+      - ${AUTOSTACK_PORTAINER_DIR:-..}/volumes/data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro   #lie le docker.sock de l'hote au docker.sock du container. Permet à Portainer de voir la conf docker de l'hote
-#      - ./volumes/Portainer/portainer.key:/etc/portainer/portainer.key #à voir plus tard pour générer clé de chiffrement via entrypoint (permet d'éviter erreur certificat autisigné quand on se connecte via https://IP:22090). Si besoin pour créer à la mano : dans terminal hote tapper 'openssl genrsa -out ./volumes/Portainer/portainer.key 2048'
+#      - ${AUTOSTACK_PORTAINER_DIR:-..}/volumes/portainer.key:/etc/portainer/portainer.key #à voir plus tard pour générer clé de chiffrement via entrypoint
     restart: unless-stopped

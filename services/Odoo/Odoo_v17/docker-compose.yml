@@ -1,3 +1,4 @@
+services:
   # Odoo 17 reste volontairement utilisé : une montée majeure exige une migration de base
   # et la validation des modules personnalisés.
   postgres:
@@ -39,7 +40,7 @@
     command: ["odoo", "--config=/etc/odoo/odoo.conf"]
     volumes:
       - odoo_data:/var/lib/odoo
-      - ./volumes/Odoo/addons:/mnt/extra-addons:ro
+      - ${AUTOSTACK_ODOO_DIR:-..}/volumes/addons:/mnt/extra-addons:ro
     configs:
       - source: odoo_config
         target: /etc/odoo/odoo.conf

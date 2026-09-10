@@ -5,6 +5,7 @@
 - Distinguer les faits observés, les hypothèses et les décisions. Ne jamais inventer une version, une compatibilité ou une source.
 - Ne jamais versionner de secret, de fichier `.env`, de clé privée, de donnée client ou de donnée personnelle sensible. Les exemples utilisent des valeurs fictives manifestes.
 - Conserver les anciennes versions dans leur variante dédiée. Toute nouvelle valeur par défaut met à jour `default-version`, `VERSIONS.md` et la procédure de migration concernée.
+- Placer les scripts et tests génériques dans `scripts/` et `tests/` à la racine. Ranger les scripts et tests propres à un service, une application ou une cible hôte dans les dossiers `scripts/` et `tests/` de sa racine. Chaque dossier de service doit rester exécutable après copie isolée ; les manifestes Compose et Docker référencent donc ses chemins locaux sans duplication.
 - Référencer les workflows réutilisables depuis [`AlexandreCARRON/skills-carron`](https://github.com/AlexandreCARRON/skills-carron) sans recopier leur contenu dans ce dépôt.
 - Avant publication, exécuter les contrôles décrits dans [`CONTRIBUTING.md`](CONTRIBUTING.md), examiner le diff et signaler toute validation non exécutée.
 

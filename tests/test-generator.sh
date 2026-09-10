@@ -2,8 +2,9 @@
 
 set -Eeuo pipefail
 
-readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly GENERATOR="${REPO_DIR}/generate-docker-compose.sh"
+REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_DIR
+readonly GENERATOR="${REPO_DIR}/scripts/generate-docker-compose.sh"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf -- "$tmp_dir"' EXIT
@@ -67,6 +68,7 @@ COMPOSE_OUTPUT="${tmp_dir}/n8n.yml" ENV_OUTPUT="$host_env" \
 grep -q '^NEW_USER=autostack$' "$host_env"
 grep -q '^POSTGRES_NON_ROOT_PASSWORD=CHANGE_ME$' "$host_env"
 grep -q '^N8N_IMAGE=docker.n8n.io/n8nio/n8n:2.30.5$' "$host_env"
+grep -q '^AUTOSTACK_N8N_DIR=./services/N8N$' "$host_env"
 
 COMPOSE_OUTPUT="${tmp_dir}/nextcloud.yml" ENV_OUTPUT="${tmp_dir}/nextcloud.env" \
   "$GENERATOR" Nginx-Proxy-Manager Nextcloud-Aio-Mastercontainer >/dev/null
