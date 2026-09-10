@@ -26,28 +26,29 @@ La variante `APISIX_demo_v3.18.0` ajoute une API interne fictive, un partenaire 
 
 Le [guide de démonstration](DEMO.md) décrit l'architecture, le démarrage automatisé, l'accès depuis VirtualBox et les scénarios de validation.
 
-## Démarrage recommandé
+## Démarrage autonome recommandé
 
-Depuis la racine du dépôt :
+Depuis la racine du dossier APISIX (`cd services/APISIX` dans le dépôt complet) :
 
 ```bash
-./generate-docker-compose.sh APISIX
+./scripts/install-APISIX.sh
 ```
 
-Remplacez ensuite `APISIX_ADMIN_KEY` dans le fichier `.env` généré. Une clé aléatoire peut être créée avec :
+Au premier lancement, le script crée `APISIX_v3.18.0/.env` puis s'arrête. Remplacez les valeurs `CHANGE_ME` ; une clé aléatoire peut être créée avec :
 
 ```bash
 openssl rand -hex 32
 ```
 
-Validez et démarrez la stack :
+Relancez ensuite l'installation :
 
 ```bash
-docker compose config --quiet
-docker compose pull
-docker compose up -d --wait
-docker compose ps
+./scripts/install-APISIX.sh
 ```
+
+Le script valide Compose, télécharge les images, démarre les conteneurs et affiche leur état. Il résout tous ses chemins depuis le dossier APISIX : le service, ses scripts et ses tests restent donc utilisables après copie isolée.
+
+Dans le dépôt complet, le générateur générique reste disponible depuis la racine avec `./scripts/generate-docker-compose.sh APISIX` pour assembler APISIX avec d'autres services.
 
 Le Dashboard est alors disponible sur <http://127.0.0.1:9180/ui/>. Saisissez la même valeur `APISIX_ADMIN_KEY` lorsqu'il la demande.
 
@@ -56,7 +57,7 @@ Le Dashboard est alors disponible sur <http://127.0.0.1:9180/ui/>. Saisissez la 
 Si `docker compose pull` échoue avec `x509: certificate signed by unknown authority` parce qu'un proxy d'entreprise intercepte Quay, la correction recommandée consiste à installer l'autorité de certification de l'entreprise. Pour un environnement de test Debian 12 où cette correction n'est pas possible, un script peut déclarer temporairement les hôtes Quay comme registres non sécurisés :
 
 ```bash
-sudo ./scripts/idempotent/configure-docker-insecure-registries.sh
+sudo ./scripts/configure-docker-insecure-registries.sh
 ```
 
 Le script explique comment identifier les domaines en erreur et demande leur liste. Il fusionne ensuite les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Pendant qu'il attend, effectuez le pull dans une autre fenêtre shell. Après confirmation, le script retire les exceptions, réactive TLS, redémarre Docker et propose de démarrer la stack APISIX avec Compose. En cas d'interruption, il tente également de retirer automatiquement les exceptions avant de quitter.
@@ -69,7 +70,7 @@ L'Admin API doit répondre avec la clé configurée :
 
 ```bash
 set -a
-. ./.env
+. ./APISIX_v3.18.0/.env
 set +a
 curl --fail --silent --show-error \
   -H "X-API-KEY: ${APISIX_ADMIN_KEY}" \

@@ -1,3 +1,4 @@
+services:
   grafana-oss:
     image: ${GRAFANA_OSS_IMAGE:?Définir GRAFANA_OSS_IMAGE}
     restart: unless-stopped

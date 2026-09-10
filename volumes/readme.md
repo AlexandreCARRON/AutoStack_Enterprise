@@ -1,1 +1,1 @@
-Je crée ici tous les volumes qui seront liés depuis la machine hote vers les containers. Trié par container
+Les fichiers et dossiers de volumes propres à un service sont désormais rangés dans `services/<Service>/volumes/`. Ce dossier racine reste uniquement comme repère de compatibilité historique.

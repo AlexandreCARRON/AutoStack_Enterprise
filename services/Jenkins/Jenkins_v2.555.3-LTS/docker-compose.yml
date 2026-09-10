@@ -1,3 +1,4 @@
+services:
   jenkins:
     image: ${JENKINS_IMAGE:?Définir JENKINS_IMAGE}
     restart: unless-stopped

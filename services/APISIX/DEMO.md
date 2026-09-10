@@ -74,7 +74,7 @@ sudo sysctl --system
 
 ## Démarrage
 
-Depuis la racine du dépôt :
+Depuis la racine du dossier APISIX (`cd services/APISIX` dans le dépôt complet) :
 
 ```bash
 ./scripts/start-apisix-demo.sh
@@ -121,7 +121,7 @@ Depuis un navigateur lancé dans la VM :
 La clé du Dashboard se trouve dans le `.env` local :
 
 ```bash
-grep '^APISIX_ADMIN_KEY=' services/APISIX/APISIX_demo_v3.18.0/.env
+grep '^APISIX_ADMIN_KEY=' APISIX_demo_v3.18.0/.env
 ```
 
 Depuis la machine hôte VirtualBox, le moyen le plus sûr consiste à ouvrir un tunnel SSH :
@@ -153,7 +153,7 @@ Après une modification du classeur, relancez simplement :
 ./scripts/run-apisix-demo-scenarios.sh
 ```
 
-Les fichiers JSON générés se trouvent dans `services/APISIX/APISIX_demo_v3.18.0/runtime/generated/` et restent exclus de Git.
+Les fichiers JSON générés se trouvent dans `APISIX_demo_v3.18.0/runtime/generated/` et restent exclus de Git.
 
 ## Redémarrage de la VM
 

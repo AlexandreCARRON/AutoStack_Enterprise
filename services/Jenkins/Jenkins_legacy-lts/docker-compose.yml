@@ -1,3 +1,4 @@
+services:
   #******************************** JENKINS ****************************************************************************************************
 
   jenkins:                              # Utilisé ici simplement pour analyser les logs multiples, ajouter Open Blue Ocean pour gérer les pipelines CI/CD
@@ -8,7 +9,7 @@
       - '${TCP_AGENT_LISTENER_JENKINS}:50000'
     container_name: jenkins
     volumes:
-      - ./volumes/jenkins/jenkins_config/jenkins_home:/var/jenkins_home
+      - ${AUTOSTACK_JENKINS_DIR:-..}/volumes/jenkins_config/jenkins_home:/var/jenkins_home
       # L'accès au socket Docker donne un contrôle élevé sur l'hôte, même monté en lecture seule.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

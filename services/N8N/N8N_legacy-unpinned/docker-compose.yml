@@ -1,3 +1,4 @@
+services:
   #******************************** N8N with POSTGRE (No specific Worker) ****************************************************************************************************
 
   postgres_n8n:                      #BDD posgreSQL liée à l'application N8N
@@ -11,7 +12,7 @@
       - POSTGRES_NON_ROOT_PASSWORD
     volumes:
       - n8n_db_data:/var/lib/postgresql/data
-      - ./volumes/n8n/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
+      - ${AUTOSTACK_N8N_DIR:-..}/scripts/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh:ro
     ports:
       - '127.0.0.1:${PORT_DB_N8N}:5432'
     healthcheck:

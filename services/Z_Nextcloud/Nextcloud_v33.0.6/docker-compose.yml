@@ -1,3 +1,4 @@
+services:
   # Stack Nextcloud classique. La version production est épinglée afin d'éviter
   # qu'un simple pull saute automatiquement une version majeure.
   db-nextcloud:

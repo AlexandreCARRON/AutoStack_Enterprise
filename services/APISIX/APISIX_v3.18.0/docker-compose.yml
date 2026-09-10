@@ -27,7 +27,7 @@ services:
     environment:
       APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY:?Définir APISIX_ADMIN_KEY}
     volumes:
-      - ./services/APISIX/APISIX_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
     ports:
       - "${APISIX_HTTP_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTP_PORT:-9080}:9080/tcp"
       - "${APISIX_HTTPS_BIND_ADDRESS:-0.0.0.0}:${APISIX_HTTPS_PORT:-9443}:9443/tcp"

@@ -63,6 +63,59 @@ class RepositoryValidatorTests(unittest.TestCase):
 
         self.assertTrue(any("lien hors dépôt" in error for error in errors))
 
+    def test_service_script_outside_scripts_directory_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            service = root / "services" / "Example"
+            service.mkdir(parents=True)
+            (root / "volumes").mkdir()
+            (root / "App").mkdir()
+            (service / "maintenance.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+
+            errors = VALIDATOR.validate_script_layout(root)
+
+        self.assertTrue(any("maintenance.sh" in error for error in errors))
+
+    def test_nested_service_python_file_outside_scripts_or_tests_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            variant = root / "services" / "Example" / "Example_v1" / "runtime"
+            variant.mkdir(parents=True)
+            (variant / "worker.py").write_text("print('demo')\n", encoding="utf-8")
+
+            errors = VALIDATOR.validate_script_layout(root)
+
+        self.assertTrue(any("worker.py" in error for error in errors))
+
+    def test_python_test_in_service_tests_directory_is_allowed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tests = root / "services" / "Example" / "tests"
+            tests.mkdir(parents=True)
+            (tests / "test_worker.py").write_text("print('test')\n", encoding="utf-8")
+
+            errors = VALIDATOR.validate_script_layout(root)
+
+        self.assertEqual(errors, [])
+
+    def test_non_autonomous_service_compose_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            variant = root / "services" / "Example" / "Example_v1"
+            variant.mkdir(parents=True)
+            (variant / "docker-compose.yml").write_text(
+                "example:\n"
+                "  image: example:1\n"
+                "  volumes:\n"
+                "    - ./volumes/example:/data\n",
+                encoding="utf-8",
+            )
+
+            errors = VALIDATOR.validate_service_autonomy(root)
+
+        self.assertTrue(any("section Compose services absente" in error for error in errors))
+        self.assertTrue(any("chemin dépendant" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,7 +4,7 @@ kind: guide
 status: active
 last_reviewed: 2026-08-03
 sensitivity: public
-sources: ["../generate-docker-compose.sh", "../VERSIONS.md"]
+sources: ["../scripts/generate-docker-compose.sh", "../VERSIONS.md"]
 ---
 
 # Architecture du dépôt
@@ -16,6 +16,8 @@ AutoStack_Enterprise/
 ├── services/
 │   └── Odoo/
 │       ├── default-version
+│       ├── scripts/
+│       │   └── entrypoint.sh
 │       ├── Odoo_v17/
 │       │   ├── .env.example
 │       │   └── docker-compose.yml
@@ -26,8 +28,9 @@ AutoStack_Enterprise/
 ├── docs/
 ├── decisions/
 ├── scripts/
+│   ├── generate-docker-compose.sh
+│   └── validate_repository.py
 ├── tests/
-├── generate-docker-compose.sh
 ├── AGENTS.md
 ├── README.md
 └── VERSIONS.md
@@ -35,14 +38,18 @@ AutoStack_Enterprise/
 
 Chaque outil exécutable possède un dossier racine sous `services/`. Ses configurations sont placées dans des sous-dossiers versionnés. Le fichier `default-version` contient le nom exact de la variante sélectionnée lorsque l'utilisateur demande seulement le nom de l'outil.
 
+Les scripts et tests exclusivement liés à un service sont placés dans `services/<Service>/scripts/` et `services/<Service>/tests/`. La même convention s'applique aux applications et cibles hôte. Les outils et tests génériques restent dans [`scripts/`](../scripts/README.md) et [`tests/`](../tests/README.md) à la racine. Un service doit conserver ses scripts, tests, données de test et chemins Compose lorsqu'il est copié seul ; les manifestes référencent donc une racine de service configurable plutôt que des chemins imposant le dépôt complet.
+
+Lors d'un assemblage, le générateur ajoute `AUTOSTACK_<SERVICE>_DIR=./services/<Service>` au fichier `.env`. Dans un dossier de service copié, chaque manifeste utilise `..` comme racine locale par défaut. Les fichiers de configuration et bind mounts suivis par Git sont conservés sous `services/<Service>/volumes/`.
+
 Les anciens fichiers non épinglés sont conservés dans des variantes suffixées par `legacy-unpinned`. Elles servent de référence et ne doivent pas être considérées comme reproductibles : leur tag `latest` peut avoir changé depuis leur création.
 
 ## Générateur
 
-Le script `generate-docker-compose.sh` reçoit une ou plusieurs sélections :
+Le script `scripts/generate-docker-compose.sh` reçoit une ou plusieurs sélections :
 
 ```bash
-./generate-docker-compose.sh Odoo Z_Nextcloud
+./scripts/generate-docker-compose.sh Odoo Z_Nextcloud
 ```
 
 Pour chaque sélection, il suit le processus suivant :

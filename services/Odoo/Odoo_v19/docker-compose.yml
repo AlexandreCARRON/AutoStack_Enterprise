@@ -1,3 +1,4 @@
+services:
   # Odoo 19 utilise un stockage séparé. Ne branchez pas ici les modules Odoo 17.
   postgres:
     image: ${POSTGRES_IMAGE_ODOO:?Définir POSTGRES_IMAGE_ODOO}

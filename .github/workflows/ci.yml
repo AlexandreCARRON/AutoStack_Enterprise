@@ -20,8 +20,11 @@ jobs:
       - name: Valider le pilote ROI IA
         run: python3 scripts/validate_roi_pilot.py measurement/KPI-SELECTION.yml --observations measurement/OBSERVATIONS.jsonl
 
-      - name: Tester les validateurs Python
+      - name: Tester les validateurs génériques Python
         run: python3 -m unittest discover -s tests -v
+
+      - name: Tester le service APISIX
+        run: python3 -m unittest discover -s services/APISIX/tests -v
 
       - name: Vérifier la syntaxe Bash
         shell: bash
@@ -39,18 +42,21 @@ jobs:
           tmp_dir="$(mktemp -d)"
           COMPOSE_OUTPUT="$tmp_dir/docker-compose.yml" \
           ENV_OUTPUT="$tmp_dir/.env" \
-            ./generate-docker-compose.sh Nginx-Proxy-Manager Odoo N8N
+            ./scripts/generate-docker-compose.sh Nginx-Proxy-Manager Odoo N8N
           docker compose --env-file "$tmp_dir/.env" -f "$tmp_dir/docker-compose.yml" config --quiet
 
       - name: Valider toutes les variantes Compose
         shell: bash
         run: |
           while IFS= read -r compose_file; do
-            service="$(basename "$(dirname "$(dirname "$compose_file")")")"
-            variant="$(basename "$(dirname "$compose_file")")"
+            selection="$(dirname "${compose_file#services/}")"
+            docker compose \
+              --env-file "$(dirname "$compose_file")/.env.example" \
+              -f "$compose_file" \
+              config --quiet
             tmp_dir="$(mktemp -d)"
             COMPOSE_OUTPUT="$tmp_dir/docker-compose.yml" \
             ENV_OUTPUT="$tmp_dir/.env" \
-              ./generate-docker-compose.sh "$service/$variant"
+              ./scripts/generate-docker-compose.sh "$selection"
             docker compose --env-file "$tmp_dir/.env" -f "$tmp_dir/docker-compose.yml" config --quiet
-          done < <(find services -mindepth 3 -maxdepth 3 -type f \( -name docker-compose.yml -o -name dockercompose.yml \) | sort)
+          done < <(find services -type f \( -name docker-compose.yml -o -name dockercompose.yml \) | sort)

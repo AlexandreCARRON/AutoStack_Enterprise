@@ -1,3 +1,4 @@
+services:
   # Nextcloud 34 utilise des volumes séparés afin d'imposer une migration explicite.
   db-nextcloud:
     image: ${POSTGRES_IMAGE_NEXTCLOUD:?Définir POSTGRES_IMAGE_NEXTCLOUD}
