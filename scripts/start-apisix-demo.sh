@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
+# Prépare et démarre l'environnement de démonstration APISIX de bout en bout.
+# Les secrets, certificats et objets générés restent dans runtime/ ou .env,
+# deux emplacements locaux exclus du versionnement.
+
 set -Eeuo pipefail
 
-readonly REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# Résout les ressources depuis le dépôt pour autoriser un lancement depuis tout dossier.
+REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_DIR
 readonly DEMO_DIR="${REPO_DIR}/services/APISIX/APISIX_demo_v3.18.0"
 readonly ENV_FILE="${DEMO_DIR}/.env"
 readonly COMPOSE_FILE="${DEMO_DIR}/docker-compose.yml"
@@ -12,6 +18,7 @@ readonly CERT_DIR="${RUNTIME_DIR}/certs"
 readonly GENERATED_DIR="${RUNTIME_DIR}/generated"
 readonly COMPOSE_PROJECT="autostack-apisix-demo"
 
+# --yes rend uniquement les confirmations non interactives ; les validations restent actives.
 ASSUME_YES=0
 if [[ "${1:-}" == "--yes" ]]; then
   ASSUME_YES=1
@@ -20,15 +27,18 @@ elif (( $# > 0 )); then
   exit 2
 fi
 
+# Arrête immédiatement le scénario avec un message homogène et exploitable.
 fail() {
   printf 'Erreur : %s\n' "$*" >&2
   exit 1
 }
 
+# Vérifie les dépendances hôte avant de créer le moindre artefact local.
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "commande requise introuvable : $1"
 }
 
+# Centralise les validations utilisateur pour conserver le même mode interactif partout.
 confirm() {
   local prompt="$1"
   local answer
@@ -39,6 +49,7 @@ confirm() {
   [[ -z "$answer" || "$answer" =~ ^[YyOo]$ ]]
 }
 
+# Fige le projet, le fichier d'environnement et la variante Compose de la démo.
 compose() {
   docker compose \
     --project-name "$COMPOSE_PROJECT" \
@@ -48,6 +59,7 @@ compose() {
     "$@"
 }
 
+# Remplace une variable précise sans exposer ni réordonner les autres secrets du fichier.
 replace_env_value() {
   local key="$1"
   local value="$2"
@@ -70,6 +82,7 @@ path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 }
 
+# Crée le fichier privé et ne régénère que les secrets absents ou encore factices.
 initialize_environment() {
   if [[ ! -f "$ENV_FILE" ]]; then
     install -m 600 "${DEMO_DIR}/.env.example" "$ENV_FILE"
@@ -89,6 +102,7 @@ initialize_environment() {
   replace_env_value DEMO_HOST_GID "$(id -g)"
 }
 
+# Réutilise les certificats valides ; sinon recrée une PKI locale cohérente pour le mTLS.
 generate_certificates() {
   local partner_host="$1"
   mkdir -p "$CERT_DIR"
@@ -105,6 +119,7 @@ generate_certificates() {
     fi
   fi
 
+  # Supprime uniquement les artefacts gérés par la démo avant leur régénération atomique.
   local server_ext="${CERT_DIR}/partner-server.ext"
   local client_ext="${CERT_DIR}/apisix-client.ext"
   rm -f -- \
@@ -153,6 +168,7 @@ generate_certificates() {
   printf 'Certificats mTLS générés : %s\n' "$CERT_DIR"
 }
 
+# Elasticsearch exige cette limite noyau sur Linux ; aucune modification n'est faite ailleurs.
 prepare_elasticsearch_host() {
   [[ "$(uname -s)" == "Linux" ]] || return 0
   local current
@@ -168,6 +184,7 @@ prepare_elasticsearch_host() {
   fi
 }
 
+# Orchestre les prérequis, la génération, le démarrage puis le bootstrap fonctionnel.
 main() {
   require_command docker
   require_command openssl
@@ -179,6 +196,8 @@ main() {
   initialize_environment
   mkdir -p "$GENERATED_DIR"
   python3 "${REPO_DIR}/scripts/generate-apisix-demo-config.py" "$WORKBOOK" "$GENERATED_DIR"
+
+  # Le manifeste généré reste la source de vérité pour le DNS et le port du partenaire.
   read -r partner_host partner_port < <(
     python3 - "${GENERATED_DIR}/manifest.json" <<'PY'
 import json
@@ -193,6 +212,7 @@ PY
   generate_certificates "$partner_host"
   prepare_elasticsearch_host
 
+  # La validation Compose précède toute opération réseau ou création de conteneur.
   compose config --quiet
   if confirm "Télécharger/construire les images et démarrer la démonstration ?"; then
     compose pull --ignore-buildable

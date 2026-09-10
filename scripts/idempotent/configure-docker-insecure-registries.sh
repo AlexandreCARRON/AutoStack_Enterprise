@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 
+# Ouvre puis retire des exceptions TLS Docker limitées à des registres explicites.
+# Ce contournement Debian 12 est temporaire, sauvegardé et réversible ; le mode
+# guidé tente aussi de restaurer TLS lorsqu'une interruption est détectée.
+
 set -Eeuo pipefail
 
+# Les valeurs par défaut couvrent le registre et le CDN observés lors du pull APISIX.
 readonly DEFAULT_CONFIG_FILE="/etc/docker/daemon.json"
 readonly DEFAULT_REGISTRIES=("quay.io" "cdn01.quay.io")
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "${BASH_SOURCE[0]}")"
-readonly REPO_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+SCRIPT_PATH="${SCRIPT_DIR}/$(basename -- "${BASH_SOURCE[0]}")"
+readonly SCRIPT_PATH
+REPO_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+readonly REPO_DIR
 
+# Ces variables décrivent l'action demandée et l'état du workflow interactif courant.
 CONFIG_FILE="$DEFAULT_CONFIG_FILE"
 ACTION="guided"
 RESTART_DOCKER=1
@@ -16,6 +25,7 @@ REGISTRIES=()
 WORKFLOW_REGISTRIES=()
 TLS_EXCEPTIONS_ACTIVE=0
 
+# Documente les modes guidé et non interactifs sans modifier le système.
 usage() {
   cat <<'EOF'
 Usage:
@@ -39,11 +49,13 @@ Exemples:
 EOF
 }
 
+# Interrompt le script avec un message cohérent sur stderr.
 fail() {
   printf 'Erreur : %s\n' "$*" >&2
   exit 1
 }
 
+# Accepte les réponses usuelles françaises et anglaises, avec Oui comme défaut.
 confirm() {
   local prompt="$1"
   local answer
@@ -58,6 +70,7 @@ confirm() {
   done
 }
 
+# Refuse les chemins et schémas : Docker attend ici uniquement hôte[:port].
 validate_registries() {
   local registry
   for registry in "$@"; do
@@ -67,6 +80,7 @@ validate_registries() {
   done
 }
 
+# Sur interruption, retire les seules exceptions ouvertes par le workflow courant.
 restore_tls_on_exit() {
   local status=$?
   trap - EXIT INT TERM
@@ -84,10 +98,10 @@ restore_tls_on_exit() {
   exit "$status"
 }
 
+# Encadre l'ouverture temporaire, l'attente du pull puis la restauration de TLS.
 guided_workflow() {
   local known_domains
   local domains_input
-  local wait_input
   local options
 
   printf '%s\n' \
@@ -108,7 +122,7 @@ guided_workflow() {
       'Repérez chaque URL associée à "x509: certificate signed by unknown authority".' \
       'Le domaine est la partie située après https:// et avant le prochain /.' \
       'Exemple : https://cdn01.quay.io/... donne cdn01.quay.io.'
-    read -r -p 'Appuyez sur Entrée après avoir relevé les domaines. ' wait_input
+    read -r -p 'Appuyez sur Entrée après avoir relevé les domaines. '
   fi
 
   while true; do
@@ -143,6 +157,8 @@ guided_workflow() {
   fi
   "$SCRIPT_PATH" "${options[@]}" -- "${WORKFLOW_REGISTRIES[@]}"
   TLS_EXCEPTIONS_ACTIVE=1
+
+  # Le piège EXIT constitue le filet de sécurité tant que les exceptions sont actives.
   trap restore_tls_on_exit EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
@@ -151,13 +167,13 @@ guided_workflow() {
   printf '%s\n' \
     "Dans l'autre fenêtre shell, terminez maintenant le téléchargement ou" \
     "l'installation, par exemple avec : sudo docker compose pull"
-  read -r -p 'Une fois terminé, tapez un mot ou appuyez sur Entrée : ' wait_input
+  read -r -p 'Une fois terminé, tapez un mot ou appuyez sur Entrée : '
 
   while ! confirm 'Réactiver TLS et redémarrer Docker maintenant ?'; do
     printf '%s\n' \
       'TLS reste temporairement désactivé.' \
       "Terminez vos opérations dans l'autre fenêtre avant de continuer."
-    read -r -p 'Appuyez sur Entrée lorsque vous êtes prêt. ' wait_input
+    read -r -p 'Appuyez sur Entrée lorsque vous êtes prêt. '
   done
 
   options=(--remove --yes --config "$CONFIG_FILE")
@@ -185,6 +201,7 @@ guided_workflow() {
     ps
 }
 
+# Analyse les options avant les contrôles système afin que --help reste toujours disponible.
 while (($#)); do
   case "$1" in
     --add-only)
@@ -227,6 +244,7 @@ while (($#)); do
   esac
 done
 
+# Restreint ce changement de daemon Docker à la plateforme explicitement testée.
 readonly OS_RELEASE_FILE="${AUTOSTACK_OS_RELEASE_FILE:-/etc/os-release}"
 [[ -r "$OS_RELEASE_FILE" ]] || fail "impossible de lire $OS_RELEASE_FILE."
 
@@ -247,6 +265,7 @@ if ((RESTART_DOCKER)) && [[ "$EUID" -ne 0 ]]; then
   fail "le redémarrage de Docker exige sudo."
 fi
 
+# Le mode guidé réutilise ce même script pour les opérations add/remove idempotentes.
 if [[ "$ACTION" == "guided" ]]; then
   if ((ASSUME_YES)); then
     fail "--yes exige --add-only ou --remove."
@@ -260,11 +279,13 @@ if ((${#REGISTRIES[@]} == 0)); then
 fi
 validate_registries "${REGISTRIES[@]}"
 
+# Retirer une exception d'un fichier absent est déjà l'état final recherché.
 if [[ "$ACTION" == "remove" && ! -e "$CONFIG_FILE" ]]; then
   printf 'Aucune configuration à modifier dans %s.\n' "$CONFIG_FILE"
   exit 0
 fi
 
+# Le mode add interactif rappelle explicitement la baisse temporaire de sécurité.
 if [[ "$ACTION" == "add" && "$ASSUME_YES" -eq 0 ]]; then
   printf '%s\n' \
     'AVERTISSEMENT : cette configuration désactive la validation TLS' \
@@ -280,11 +301,14 @@ if [[ "$ACTION" == "add" && "$ASSUME_YES" -eq 0 ]]; then
   esac
 fi
 
-readonly CONFIG_DIR="$(dirname -- "$CONFIG_FILE")"
+# Prépare la nouvelle configuration dans le même dossier pour permettre un remplacement sûr.
+CONFIG_DIR="$(dirname -- "$CONFIG_FILE")"
+readonly CONFIG_DIR
 mkdir -p -- "$CONFIG_DIR"
 TEMP_CONFIG="$(mktemp "${CONFIG_DIR}/.daemon.json.XXXXXX")"
 trap 'rm -f -- "$TEMP_CONFIG"' EXIT
 
+# Préserve toutes les clés Docker étrangères et ne modifie que insecure-registries.
 python3 - "$CONFIG_FILE" "$TEMP_CONFIG" "$ACTION" "${REGISTRIES[@]}" <<'PY'
 import json
 import sys
@@ -328,11 +352,13 @@ with destination.open("w", encoding="utf-8") as stream:
     stream.write("\n")
 PY
 
+# Une exécution répétée ne redémarre pas Docker lorsque la cible est déjà conforme.
 if [[ -f "$CONFIG_FILE" ]] && cmp -s -- "$CONFIG_FILE" "$TEMP_CONFIG"; then
   printf 'Configuration déjà à jour : %s\n' "$CONFIG_FILE"
   exit 0
 fi
 
+# Demande au daemon de valider le JSON avant de toucher à sa configuration active.
 if command -v dockerd >/dev/null 2>&1; then
   dockerd --validate --config-file="$TEMP_CONFIG" >/dev/null
 elif ((RESTART_DOCKER)); then
@@ -341,6 +367,7 @@ else
   printf 'Avertissement : validation dockerd non exécutée.\n' >&2
 fi
 
+# Conserve une sauvegarde horodatée avant toute modification d'un fichier existant.
 BACKUP_FILE=""
 if [[ -f "$CONFIG_FILE" ]]; then
   BACKUP_FILE="${CONFIG_FILE}.backup.$(date -u +%Y%m%dT%H%M%SZ).${BASHPID:-$$}"
@@ -351,6 +378,7 @@ fi
 install -m 0644 -- "$TEMP_CONFIG" "$CONFIG_FILE"
 printf 'Configuration mise à jour : %s\n' "$CONFIG_FILE"
 
+# En cas d'échec du redémarrage, restaure immédiatement l'état Docker précédent.
 if ((RESTART_DOCKER)); then
   if ! systemctl restart docker; then
     printf 'Échec du redémarrage de Docker ; restauration en cours.\n' >&2

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""API HTTP/HTTPS minimale utilisée uniquement par la démonstration APISIX."""
+"""API HTTP/HTTPS minimale utilisée uniquement par la démonstration APISIX.
+
+Le même serveur simule soit le SI interne, soit le partenaire externe selon
+DEMO_API_ROLE. Il ne doit pas être utilisé comme serveur applicatif de production.
+"""
 
 from __future__ import annotations
 
@@ -18,9 +22,11 @@ PORT = int(os.environ.get("DEMO_API_PORT", "8080"))
 PARTNER_BACKEND_API_KEY = os.environ.get("DEMO_PARTNER_BACKEND_API_KEY", "")
 
 
+# Implémente uniquement les endpoints nécessaires aux scénarios documentés.
 class DemoHandler(BaseHTTPRequestHandler):
     server_version = "AutoStackDemoAPI/1.0"
 
+    # Émet des journaux JSON structurés pour rester lisible dans docker compose logs.
     def log_message(self, message: str, *args: object) -> None:
         print(
             json.dumps(
@@ -34,6 +40,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             flush=True,
         )
 
+    # Accepte du JSON ou conserve le texte brut pour rendre la démo tolérante aux payloads.
     def _body(self) -> Any:
         length = int(self.headers.get("Content-Length", "0"))
         if length == 0:
@@ -44,6 +51,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return raw.decode("utf-8", errors="replace")
 
+    # Uniformise toutes les réponses et fixe explicitement leur longueur HTTP.
     def _reply(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
         raw = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status)
@@ -52,6 +60,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    # Retourne les en-têtes ajoutés par APISIX afin de rendre le routage observable.
     def _request_context(self) -> dict[str, Any]:
         return {
             "method": self.command,
@@ -60,6 +69,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             "request_id": self.headers.get("X-Request-Id"),
         }
 
+    # Le backend partenaire exige la clé posée par proxy-rewrite, jamais celle du client.
     def _partner_authorized(self) -> bool:
         if ROLE != "partner":
             return True
@@ -72,6 +82,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         )
         return False
 
+    # Simule la lecture de commandes internes ou l'état du partenaire selon le rôle.
     def do_GET(self) -> None:  # noqa: N802 - API BaseHTTPRequestHandler
         if self.path == "/health":
             self._reply(HTTPStatus.OK, {"status": "healthy", "role": ROLE})
@@ -107,6 +118,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             return
 
         if ROLE == "partner" and str(path) in {"/", "/status"}:
+            # Le certificat pair prouve que la terminaison cliente mTLS vient d'APISIX.
             peer = self.connection.getpeercert() if hasattr(self.connection, "getpeercert") else None
             self._reply(
                 HTTPStatus.OK,
@@ -122,6 +134,7 @@ class DemoHandler(BaseHTTPRequestHandler):
 
         self._reply(HTTPStatus.NOT_FOUND, {"error": "not found", "request": self._request_context()})
 
+    # Simule la création d'une commande ou l'envoi d'un message au partenaire.
     def do_POST(self) -> None:  # noqa: N802 - API BaseHTTPRequestHandler
         if not self._partner_authorized():
             return
@@ -140,6 +153,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             return
 
         if ROLE == "partner" and str(path) == "/messages":
+            # Le sujet client est renvoyé pour rendre la preuve mTLS visible pendant la démo.
             peer = self.connection.getpeercert() if hasattr(self.connection, "getpeercert") else None
             self._reply(
                 HTTPStatus.ACCEPTED,
@@ -156,6 +170,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         self._reply(HTTPStatus.NOT_FOUND, {"error": "not found", "request": self._request_context()})
 
 
+# Démarre en HTTP simple ou en HTTPS/mTLS strict selon les variables de certificats.
 def main() -> None:
     server = ThreadingHTTPServer(("0.0.0.0", PORT), DemoHandler)
     cert_file = os.environ.get("DEMO_TLS_CERT")
@@ -163,6 +178,7 @@ def main() -> None:
     ca_file = os.environ.get("DEMO_TLS_CLIENT_CA")
 
     if cert_file and key_file:
+        # TLS 1.2 minimum et certificat client obligatoire dès qu'une CA est fournie.
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(certfile=cert_file, keyfile=key_file)

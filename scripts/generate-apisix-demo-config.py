@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Génère les objets APISIX de démonstration depuis le classeur, sans dépendance Python externe."""
+"""Génère les objets APISIX de démonstration depuis le classeur.
+
+Le lecteur XLSX repose uniquement sur la bibliothèque standard. Les données sont
+validées avant écriture afin de ne jamais produire une configuration partielle
+présentée comme exploitable par le bootstrap de la démo.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +22,7 @@ REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 
 
+# Convertit une référence Excel (A, B, AA…) en index de colonne commençant à zéro.
 def column_index(reference: str) -> int:
     match = re.match(r"([A-Z]+)", reference)
     if not match:
@@ -27,6 +33,7 @@ def column_index(reference: str) -> int:
     return value - 1
 
 
+# Charge la table de chaînes partagées, facultative dans le format OOXML.
 def read_shared_strings(archive: zipfile.ZipFile) -> list[str]:
     if "xl/sharedStrings.xml" not in archive.namelist():
         return []
@@ -34,6 +41,7 @@ def read_shared_strings(archive: zipfile.ZipFile) -> list[str]:
     return ["".join(item.itertext()) for item in root.findall(f"{{{MAIN_NS}}}si")]
 
 
+# Résout les relations OOXML pour associer chaque nom de feuille à son fichier XML.
 def workbook_sheet_paths(archive: zipfile.ZipFile) -> dict[str, str]:
     workbook = ET.fromstring(archive.read("xl/workbook.xml"))
     relationships = ET.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
@@ -50,6 +58,7 @@ def workbook_sheet_paths(archive: zipfile.ZipFile) -> dict[str, str]:
     return result
 
 
+# Restitue la valeur textuelle d'une cellule quel que soit son encodage XLSX usuel.
 def cell_text(cell: ET.Element, shared_strings: list[str]) -> str:
     cell_type = cell.attrib.get("t")
     if cell_type == "inlineStr":
@@ -65,6 +74,7 @@ def cell_text(cell: ET.Element, shared_strings: list[str]) -> str:
     return value.text
 
 
+# Transforme une feuille en lignes nommées, en conservant les cellules vides intermédiaires.
 def read_table(archive: zipfile.ZipFile, sheet_path: str, shared_strings: list[str]) -> list[dict[str, str]]:
     root = ET.fromstring(archive.read(sheet_path))
     rows: list[list[str]] = []
@@ -86,6 +96,7 @@ def read_table(archive: zipfile.ZipFile, sheet_path: str, shared_strings: list[s
     ]
 
 
+# Impose le contrat volontairement simple d'une seule ligne par objet de démonstration.
 def first_row(tables: dict[str, list[dict[str, str]]], name: str) -> dict[str, str]:
     rows = tables.get(name, [])
     if len(rows) != 1:
@@ -93,10 +104,12 @@ def first_row(tables: dict[str, list[dict[str, str]]], name: str) -> dict[str, s
     return rows[0]
 
 
+# Normalise les variantes booléennes acceptées dans le classeur destiné aux humains.
 def enabled(value: str) -> bool:
     return value.strip().upper() in {"1", "TRUE", "YES", "Y", "OUI"}
 
 
+# Produit un identifiant APISIX stable et refuse toute valeur qui deviendrait vide.
 def slug(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     if not normalized:
@@ -104,12 +117,14 @@ def slug(value: str) -> str:
     return normalized
 
 
+# Écrit un JSON lisible et terminé par une nouvelle ligne pour des diffs déterministes.
 def write_json(output_dir: Path, name: str, payload: object) -> None:
     target = output_dir / name
     target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Généré : {target}")
 
 
+# Valide le classeur complet puis génère tous les objets consommés par le bootstrap.
 def generate(workbook: Path, output_dir: Path) -> None:
     required_sheets = {"PARTNER", "BACKEND", "UPSTREAM", "ROUTE", "SECURITY", "PLUGINS"}
     with zipfile.ZipFile(workbook) as archive:
@@ -130,6 +145,7 @@ def generate(workbook: Path, output_dir: Path) -> None:
     security = first_row(tables, "SECURITY")
     plugin_rows = tables["PLUGINS"]
 
+    # Ces contraintes matérialisent le scénario couvert, pas toutes les capacités APISIX.
     if security["AUTH_MODE"] != "key-auth":
         raise ValueError("Cette démo prend actuellement en charge AUTH_MODE=key-auth uniquement.")
     if backend["SCHEME"] != "https":
@@ -151,6 +167,7 @@ def generate(workbook: Path, output_dir: Path) -> None:
     if not 1 <= port <= 65535:
         raise ValueError("BACKEND.PORT doit être compris entre 1 et 65535.")
 
+    # Les secrets restent des variables symboliques et seront injectés à l'exécution.
     plugins: dict[str, object] = {
         "key-auth": {"header": "X-API-Key", "hide_credentials": True},
         "proxy-rewrite": {
@@ -160,6 +177,8 @@ def generate(workbook: Path, output_dir: Path) -> None:
             },
         },
     }
+
+    # Seuls les plugins explicitement supportés sont acceptés pour éviter une fausse démo.
     for plugin_row in plugin_rows:
         if plugin_row.get("ROUTE") != route_row["ROUTE_NAME"] or not enabled(plugin_row.get("ENABLED", "")):
             continue
@@ -173,6 +192,7 @@ def generate(workbook: Path, output_dir: Path) -> None:
         else:
             raise ValueError(f"Plugin activé non pris en charge par la démo : {plugin}")
 
+    # Les identifiants et labels stables rendent les PUT du bootstrap idempotents.
     upstream = {
         "id": upstream_id,
         "name": upstream_row["UPSTREAM_NAME"],
@@ -214,6 +234,7 @@ def generate(workbook: Path, output_dir: Path) -> None:
     write_json(output_dir, "manifest.json", manifest)
 
 
+# Fournit une interface CLI stable et réserve le code 1 aux erreurs de données attendues.
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("workbook", type=Path)

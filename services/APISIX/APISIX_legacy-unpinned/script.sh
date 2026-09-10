@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Installateur POC historique incomplet, conservé uniquement pour référence.
+# Ne pas l'utiliser pour un nouveau déploiement : il supprime des ressources Docker
+# nommées, fixe les adresses IP et contient une ancienne clé Admin de démonstration.
 
 ###############################################################################
 # APISIX POC INSTALLER
@@ -40,9 +42,14 @@ confirm() {
 # Variables
 # ---------------------------------------------------------------------------
 
+# Ces valeurs figées expliquent le fonctionnement du POC mais empêchent sa composition
+# sûre avec d'autres stacks ; la variante maintenue utilise Docker Compose à la place.
+# APISIX_IP et NGINX_IP sont conservées uniquement pour documenter l'adressage prévu.
 APISIX_NETWORK="apisix"
 ETCD_IP="172.18.5.10"
+# shellcheck disable=SC2034
 APISIX_IP="172.18.5.11"
+# shellcheck disable=SC2034
 NGINX_IP="172.18.5.20"
 
 APISIX_ROOT="$HOME/apisix-poc"
@@ -82,6 +89,7 @@ step "Création du réseau Docker APISIX"
 
 if confirm "Créer le réseau Docker APISIX ?"; then
 
+    # Suppression volontairement destructive héritée du POC d'origine.
     docker network rm "$APISIX_NETWORK" 2>/dev/null || true
 
     docker network create \
@@ -102,6 +110,7 @@ step "Déploiement ETCD"
 
 if confirm "Déployer ETCD ?"; then
 
+    # Le nom de conteneur global est remplacé de force : autre raison de ne pas exécuter ce POC.
     docker rm -f etcd-server 2>/dev/null || true
 
     docker pull quay.io/coreos/etcd:v3.5.18
@@ -133,6 +142,7 @@ if confirm "Créer la configuration APISIX ?"; then
 
     mkdir -p "$APISIX_ROOT/conf"
 
+    # Cette clé est publique et illustrative ; elle n'est pas un secret de déploiement.
     cat > "$APISIX_ROOT/conf/config.yaml" <<EOF
 deployment:
   role: traditional

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Client éphémère pour les scénarios réseau de la démonstration."""
+"""Client éphémère pour les scénarios réseau de la démonstration.
+
+Le statut attendu est vérifié explicitement afin qu'un scénario négatif réussi
+(par exemple HTTP 401 sans clé) soit distingué d'une panne réseau.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +14,7 @@ import urllib.error
 import urllib.request
 
 
+# Exécute une requête unique avec ou sans clé APISIX et retourne un code automatisable.
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--without-key", action="store_true")
@@ -25,6 +30,7 @@ def main() -> int:
             status = response.status
             body = response.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as exc:
+        # Une erreur HTTP peut être le résultat attendu du scénario sans authentification.
         status = exc.code
         body = exc.read().decode("utf-8", errors="replace")
     except urllib.error.URLError as exc:

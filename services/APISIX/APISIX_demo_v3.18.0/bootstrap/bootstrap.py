@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Charge de façon idempotente les objets de la démo dans APISIX et prépare Kibana."""
+"""Charge les objets de la démo dans APISIX et prépare Kibana.
+
+Les appels APISIX utilisent des PUT sur des identifiants stables : relancer ce
+conteneur réconcilie donc la configuration sans dupliquer les ressources.
+"""
 
 from __future__ import annotations
 
@@ -23,6 +27,7 @@ CERT_DIR = Path("/demo/certs")
 ENV_PATTERN = re.compile(r"\$\{([A-Z_][A-Z0-9_]*)\}")
 
 
+# Remplace récursivement les marqueurs ${VARIABLE} au dernier moment seulement.
 def substitute(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: substitute(item) for key, item in value.items()}
@@ -33,10 +38,12 @@ def substitute(value: Any) -> Any:
     return value
 
 
+# Charge un objet généré et injecte les secrets fournis au conteneur, jamais au dépôt.
 def load_json(name: str) -> dict[str, Any]:
     return substitute(json.loads((GENERATED_DIR / name).read_text(encoding="utf-8")))
 
 
+# Effectue une requête JSON et retourne aussi les erreurs HTTP pour les diagnostiquer.
 def request(
     method: str,
     url: str,
@@ -54,6 +61,7 @@ def request(
         return exc.code, exc.read().decode("utf-8", errors="replace")
 
 
+# Attend une disponibilité HTTP bornée tout en donnant une progression peu bruyante.
 def wait_for(name: str, method: str, url: str, headers: dict[str, str] | None = None, attempts: int = 90) -> None:
     for attempt in range(1, attempts + 1):
         try:
@@ -69,6 +77,7 @@ def wait_for(name: str, method: str, url: str, headers: dict[str, str] | None = 
     raise RuntimeError(f"{name} n'est pas devenu disponible : {url}")
 
 
+# Réconcilie une ressource nommée via l'Admin API et refuse les succès ambigus.
 def apisix_put(resource: str, resource_id: str, payload: dict[str, Any]) -> None:
     status, response = request(
         "PUT",
@@ -81,15 +90,19 @@ def apisix_put(resource: str, resource_id: str, payload: dict[str, Any]) -> None
     print(f"Configuré : APISIX {resource}/{resource_id}", flush=True)
 
 
+# Installe les flux partenaire et SI interne avec leurs consommateurs dédiés.
 def configure_apisix() -> None:
     upstream = load_json("upstream.json")
     upstream_id = upstream.pop("id")
+
+    # Le certificat client n'est lu que dans le volume runtime au moment du bootstrap.
     upstream["tls"] = {
         "client_cert": (CERT_DIR / "apisix-client.crt").read_text(encoding="utf-8"),
         "client_key": (CERT_DIR / "apisix-client.key").read_text(encoding="utf-8"),
     }
     apisix_put("upstreams", upstream_id, upstream)
 
+    # L'API interne fictive reste un second upstream distinct du partenaire externe.
     internal_upstream_id = "upstream-api-interne"
     apisix_put(
         "upstreams",
@@ -129,6 +142,7 @@ def configure_apisix() -> None:
     route_id = route.pop("id")
     apisix_put("routes", route_id, route)
 
+    # Les deux routes journalisent vers le même pipeline pour une démonstration corrélable.
     common_plugins = {
         "key-auth": {"header": "X-API-Key", "hide_credentials": True},
         "http-logger": {
@@ -152,6 +166,7 @@ def configure_apisix() -> None:
     )
 
 
+# Crée la vue de données Kibana ; son échec reste non bloquant pour le routage APISIX.
 def configure_kibana() -> None:
     payload = {
         "data_view": {
@@ -177,6 +192,8 @@ def configure_kibana() -> None:
     except (KeyError, TypeError, json.JSONDecodeError):
         print("Avertissement : Kibana n'a pas renvoyé l'identifiant de la vue.", file=sys.stderr)
         return
+
+    # Définir la vue par défaut permet d'ouvrir Discover sans configuration manuelle.
     default_status, default_response = request(
         "POST",
         f"{KIBANA_URL}/api/data_views/default",
@@ -193,6 +210,7 @@ def configure_kibana() -> None:
     print("Configuré : vue Kibana par défaut apisix-demo-*", flush=True)
 
 
+# Attend toutes les dépendances avant d'appliquer la configuration dans un ordre stable.
 def main() -> int:
     try:
         wait_for(
