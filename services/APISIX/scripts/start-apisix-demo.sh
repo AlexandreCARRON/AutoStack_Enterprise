@@ -95,7 +95,17 @@ initialize_environment() {
   fi
 
   local key
-  for key in APISIX_ADMIN_KEY DEMO_PARTNER_API_KEY DEMO_INTERNAL_API_KEY DEMO_PARTNER_BACKEND_API_KEY; do
+  for key in \
+    APISIX_ADMIN_KEY \
+    DEMO_PARTNER_API_KEY \
+    DEMO_INTERNAL_API_KEY \
+    DEMO_PARTNER_BACKEND_API_KEY \
+    KEYCLOAK_ADMIN_PASSWORD \
+    KEYCLOAK_DB_PASSWORD \
+    KEYCLOAK_APISIX_CLIENT_SECRET \
+    KEYCLOAK_PARTNER_CLIENT_SECRET \
+    KEYCLOAK_DEMO_USER_PASSWORD \
+    APISIX_OIDC_SESSION_SECRET; do
     if ! grep -Eq "^${key}=" "$ENV_FILE" || grep -Eq "^${key}=CHANGE_ME" "$ENV_FILE"; then
       replace_env_value "$key" "$(openssl rand -hex 32)"
       printf 'Secret local généré : %s\n' "$key"
@@ -227,7 +237,12 @@ PY
   fi
 
   compose ps
-  printf '\nDémonstration prête. Lancez depuis la racine du service :\n  ./scripts/run-apisix-demo-scenarios.sh\n'
+  printf '%s\n' \
+    '' \
+    'Démonstration prête. Lancez depuis la racine du service :' \
+    '  ./scripts/run-apisix-demo-scenarios.sh' \
+    "Console Keycloak : ${KEYCLOAK_PUBLIC_URL:-http://127.0.0.1:8080}/admin/" \
+    "Parcours BFF : ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}/bff/orders"
 }
 
 main "$@"

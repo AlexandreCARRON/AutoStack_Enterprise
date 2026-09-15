@@ -7,6 +7,8 @@ DEMO_API_ROLE. Il ne doit pas être utilisé comme serveur applicatif de product
 
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import os
 import ssl
@@ -62,11 +64,21 @@ class DemoHandler(BaseHTTPRequestHandler):
 
     # Retourne les en-têtes ajoutés par APISIX afin de rendre le routage observable.
     def _request_context(self) -> dict[str, Any]:
+        raw_userinfo = self.headers.get("X-Userinfo")
+        userinfo = None
+        if raw_userinfo:
+            try:
+                padded = raw_userinfo + "=" * (-len(raw_userinfo) % 4)
+                userinfo = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+            except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError):
+                userinfo = {"error": "invalid X-Userinfo header"}
         return {
             "method": self.command,
             "path": self.path,
             "consumer": self.headers.get("X-Consumer-Username"),
             "request_id": self.headers.get("X-Request-Id"),
+            "oidc_access_token": bool(self.headers.get("X-Access-Token")),
+            "oidc_userinfo": userinfo,
         }
 
     # Le backend partenaire exige la clé posée par proxy-rewrite, jamais celle du client.

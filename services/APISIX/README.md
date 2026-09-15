@@ -2,9 +2,9 @@
 id: autostack.apisix
 kind: guide
 status: active
-last_reviewed: 2026-09-09
+last_reviewed: 2026-09-15
 sensitivity: public
-sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
+sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://apisix.apache.org/docs/apisix/plugins/openid-connect/", "https://www.keycloak.org/server/containers", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
 ---
 
 # Apache APISIX
@@ -22,7 +22,7 @@ Les adresses et ports hôtes sont configurables dans `.env`. L'Admin API exige t
 
 ## Démonstration d'interconnexion complète
 
-La variante `APISIX_demo_v3.18.0` ajoute une API interne fictive, un partenaire HTTPS avec mTLS et une chaîne Logstash → Elasticsearch → Kibana. Elle exploite le classeur fourni pour générer les objets APISIX sans modifier la variante minimale par défaut.
+La variante `APISIX_demo_v3.18.0` ajoute Keycloak avec PostgreSQL, une API interne fictive, un partenaire HTTPS avec mTLS et une chaîne Logstash → Elasticsearch → Kibana. Elle démontre `key-auth`, OpenID Connect en machine-à-machine et un parcours navigateur de type BFF, sans modifier la variante minimale par défaut.
 
 Le [guide de démonstration](DEMO.md) décrit l'architecture, le démarrage automatisé, l'accès depuis VirtualBox et les scénarios de validation.
 

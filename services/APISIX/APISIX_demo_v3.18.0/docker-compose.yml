@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     environment:
       APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY:?Définir APISIX_ADMIN_KEY}
+      KEYCLOAK_APISIX_CLIENT_SECRET: ${KEYCLOAK_APISIX_CLIENT_SECRET:?Définir KEYCLOAK_APISIX_CLIENT_SECRET}
     volumes:
       - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
     ports:
@@ -49,6 +50,7 @@ services:
       - demo-internal
       - demo-partner
       - demo-observability
+      - demo-identity
     security_opt:
       - no-new-privileges:true
 
@@ -116,6 +118,72 @@ services:
       demo-partner:
         aliases:
           - ${DEMO_PARTNER_HOST:-backend-partenaire-a.toto.local}
+    security_opt:
+      - no-new-privileges:true
+
+  keycloak-db:
+    image: ${KEYCLOAK_DB_IMAGE:-postgres:17-bookworm}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Définir KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - apisix_demo_keycloak_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    mem_limit: ${KEYCLOAK_DB_MEMORY:-512m}
+    networks:
+      - demo-identity
+    security_opt:
+      - no-new-privileges:true
+
+  keycloak:
+    image: ${KEYCLOAK_IMAGE:?Définir KEYCLOAK_IMAGE}
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Définir KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Définir KEYCLOAK_DB_PASSWORD}
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:-http://127.0.0.1:8080}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+      APISIX_PUBLIC_URL: ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}
+      KEYCLOAK_APISIX_CLIENT_SECRET: ${KEYCLOAK_APISIX_CLIENT_SECRET:?Définir KEYCLOAK_APISIX_CLIENT_SECRET}
+      KEYCLOAK_PARTNER_CLIENT_SECRET: ${KEYCLOAK_PARTNER_CLIENT_SECRET:?Définir KEYCLOAK_PARTNER_CLIENT_SECRET}
+      KEYCLOAK_DEMO_USER_PASSWORD: ${KEYCLOAK_DEMO_USER_PASSWORD:?Définir KEYCLOAK_DEMO_USER_PASSWORD}
+    volumes:
+      - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/keycloak/autostack-realm.json:/opt/keycloak/data/import/autostack-realm.json:ro
+    ports:
+      - "${KEYCLOAK_BIND_ADDRESS:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080/tcp"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -ec
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000;
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3;
+          grep -q '200 OK' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    mem_limit: ${KEYCLOAK_MEMORY:-1024m}
+    networks:
+      - demo-management
+      - demo-identity
     security_opt:
       - no-new-privileges:true
 
@@ -206,6 +274,26 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  oidc-partner-client:
+    image: ${DEMO_API_IMAGE:-python:3.12-slim-bookworm}
+    profiles: ["tools"]
+    restart: "no"
+    environment:
+      TARGET_URL: http://apisix:9080/oidc/api/interne/orders
+      AUTH_MODE: oidc-client-credentials
+      OIDC_TOKEN_URL: http://keycloak:8080/realms/autostack/protocol/openid-connect/token
+      OIDC_CLIENT_ID: autostack-partner
+      OIDC_CLIENT_SECRET: ${KEYCLOAK_PARTNER_CLIENT_SECRET:?Définir KEYCLOAK_PARTNER_CLIENT_SECRET}
+      EXPECTED_STATUS: "200"
+    volumes:
+      - ${AUTOSTACK_APISIX_DIR:-..}/scripts/client.py:/demo/client.py:ro
+    entrypoint: ["python", "/demo/client.py"]
+    networks:
+      - demo-entry
+      - demo-identity
+    security_opt:
+      - no-new-privileges:true
+
   demo-configurator:
     image: ${DEMO_API_IMAGE:-python:3.12-slim-bookworm}
     profiles: ["tools"]
@@ -216,6 +304,9 @@ services:
       DEMO_PARTNER_API_KEY: ${DEMO_PARTNER_API_KEY:?Définir DEMO_PARTNER_API_KEY}
       DEMO_INTERNAL_API_KEY: ${DEMO_INTERNAL_API_KEY:?Définir DEMO_INTERNAL_API_KEY}
       DEMO_PARTNER_BACKEND_API_KEY: ${DEMO_PARTNER_BACKEND_API_KEY:?Définir DEMO_PARTNER_BACKEND_API_KEY}
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      APISIX_PUBLIC_URL: ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}
+      APISIX_OIDC_SESSION_SECRET: ${APISIX_OIDC_SESSION_SECRET:?Définir APISIX_OIDC_SESSION_SECRET}
       KIBANA_URL: http://kibana:5601
       LOGSTASH_URL: http://logstash:8080
     volumes:
@@ -231,6 +322,8 @@ services:
         condition: service_healthy
       partner-api:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
       logstash:
@@ -242,12 +335,14 @@ services:
       - demo-internal
       - demo-partner
       - demo-observability
+      - demo-identity
     security_opt:
       - no-new-privileges:true
 
 volumes:
   apisix_demo_etcd_data:
   apisix_demo_elasticsearch_data:
+  apisix_demo_keycloak_db_data:
 
 networks:
   demo-management:
@@ -262,4 +357,6 @@ networks:
   demo-partner:
     internal: true
   demo-observability:
+    internal: true
+  demo-identity:
     internal: true

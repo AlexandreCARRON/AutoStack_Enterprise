@@ -22,6 +22,10 @@ ADMIN_URL = os.environ.get("APISIX_ADMIN_URL", "http://apisix:9180").rstrip("/")
 ADMIN_KEY = os.environ["APISIX_ADMIN_KEY"]
 KIBANA_URL = os.environ.get("KIBANA_URL", "http://kibana:5601").rstrip("/")
 LOGSTASH_URL = os.environ.get("LOGSTASH_URL", "http://logstash:8080").rstrip("/")
+KEYCLOAK_INTERNAL_URL = os.environ.get("KEYCLOAK_INTERNAL_URL", "http://keycloak:8080").rstrip("/")
+KEYCLOAK_REALM = "autostack"
+OIDC_DISCOVERY = f"{KEYCLOAK_INTERNAL_URL}/realms/{KEYCLOAK_REALM}/.well-known/openid-configuration"
+APISIX_PUBLIC_URL = os.environ.get("APISIX_PUBLIC_URL", "http://127.0.0.1:9080").rstrip("/")
 GENERATED_DIR = Path("/demo/generated")
 CERT_DIR = Path("/demo/certs")
 ENV_PATTERN = re.compile(r"\$\{([A-Z_][A-Z0-9_]*)\}")
@@ -88,6 +92,42 @@ def apisix_put(resource: str, resource_id: str, payload: dict[str, Any]) -> None
     if status not in {200, 201}:
         raise RuntimeError(f"APISIX {resource}/{resource_id} a répondu {status}: {response}")
     print(f"Configuré : APISIX {resource}/{resource_id}", flush=True)
+
+
+# Partage les paramètres d'identité communs aux flux OIDC navigateur et machine.
+def oidc_plugin(*, bearer_only: bool) -> dict[str, Any]:
+    plugin: dict[str, Any] = {
+        "client_id": "autostack-apisix-bff",
+        "client_secret": "$ENV://KEYCLOAK_APISIX_CLIENT_SECRET",
+        "discovery": OIDC_DISCOVERY,
+        "scope": "openid profile email",
+        "realm": KEYCLOAK_REALM,
+        "bearer_only": bearer_only,
+        "set_access_token_header": True,
+        "set_userinfo_header": True,
+    }
+    if bearer_only:
+        plugin["use_jwks"] = True
+    else:
+        plugin.update(
+            {
+                "use_pkce": True,
+                "redirect_uri": f"{APISIX_PUBLIC_URL}/bff/callback",
+                "logout_path": "/bff/logout",
+                "post_logout_redirect_uri": f"{APISIX_PUBLIC_URL}/",
+                "session": {
+                    "secret": os.environ["APISIX_OIDC_SESSION_SECRET"],
+                    "cookie_name": "autostack_oidc",
+                    "cookie_path": "/bff",
+                    "cookie_secure": False,
+                    "cookie_http_only": True,
+                    "cookie_same_site": "Lax",
+                    "idling_timeout": 900,
+                    "absolute_timeout": 3600,
+                },
+            }
+        )
+    return plugin
 
 
 # Installe les flux partenaire et SI interne avec leurs consommateurs dédiés.
@@ -165,6 +205,50 @@ def configure_apisix() -> None:
         },
     )
 
+    # Route M2M : le partenaire présente un access token obtenu par client_credentials.
+    apisix_put(
+        "routes",
+        "route-api-interne-oidc",
+        {
+            "name": "route-api-interne-oidc",
+            "uri": "/oidc/api/interne/*",
+            "methods": ["GET", "POST"],
+            "upstream_id": internal_upstream_id,
+            "plugins": {
+                "openid-connect": oidc_plugin(bearer_only=True),
+                "http-logger": {
+                    "uri": "http://logstash:8080/apisix",
+                    "batch_max_size": 1,
+                    "inactive_timeout": 1,
+                },
+                "proxy-rewrite": {"regex_uri": ["^/oidc/api/interne/?(.*)", "/$1"]},
+            },
+            "labels": {"autostack-demo": "true", "auth": "oidc-m2m"},
+        },
+    )
+
+    # Route BFF : APISIX gère le code OIDC et conserve les jetons dans sa session HTTP-only.
+    apisix_put(
+        "routes",
+        "route-api-interne-bff",
+        {
+            "name": "route-api-interne-bff",
+            "uri": "/bff/*",
+            "methods": ["GET", "POST"],
+            "upstream_id": internal_upstream_id,
+            "plugins": {
+                "openid-connect": oidc_plugin(bearer_only=False),
+                "http-logger": {
+                    "uri": "http://logstash:8080/apisix",
+                    "batch_max_size": 1,
+                    "inactive_timeout": 1,
+                },
+                "proxy-rewrite": {"regex_uri": ["^/bff/?(.*)", "/$1"]},
+            },
+            "labels": {"autostack-demo": "true", "auth": "oidc-bff"},
+        },
+    )
+
 
 # Crée la vue de données Kibana ; son échec reste non bloquant pour le routage APISIX.
 def configure_kibana() -> None:
@@ -219,6 +303,7 @@ def main() -> int:
             f"{ADMIN_URL}/apisix/admin/routes",
             {"X-API-KEY": ADMIN_KEY},
         )
+        wait_for("Keycloak", "GET", OIDC_DISCOVERY, attempts=150)
         wait_for("Logstash HTTP input", "GET", f"{LOGSTASH_URL}/health")
         wait_for("Kibana", "GET", f"{KIBANA_URL}/api/status", attempts=150)
         configure_apisix()

@@ -2,7 +2,7 @@
 
 # Arrête uniquement le projet Compose de démonstration APISIX.
 # Par défaut les volumes sont conservés ; leur suppression exige --volumes puis
-# une confirmation explicite pour protéger les routes et journaux locaux.
+# une confirmation explicite pour protéger les routes, identités et journaux locaux.
 
 set -Eeuo pipefail
 
@@ -31,7 +31,7 @@ compose=(
 
 if [[ "${1:-}" == "--volumes" ]]; then
   # Cette branche détruit les données nommées et impose donc un second consentement.
-  read -r -p 'Supprimer aussi les routes APISIX, les index Elasticsearch et tous les volumes de la démo ? [y/N] ' answer
+  read -r -p 'Supprimer aussi les routes APISIX, le realm Keycloak, les index Elasticsearch et tous les volumes de la démo ? [y/N] ' answer
   [[ "$answer" =~ ^[YyOo]$ ]] || {
     printf 'Suppression des volumes annulée.\n'
     exit 0

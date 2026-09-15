@@ -2,7 +2,7 @@
 id: autostack.apisix.scripts
 kind: guide
 status: active
-last_reviewed: 2026-09-10
+last_reviewed: 2026-09-15
 sensitivity: public
 sources: ["services/APISIX/README.md", "services/APISIX/DEMO.md"]
 ---
@@ -14,9 +14,9 @@ Ces scripts agissent uniquement sur APISIX et ses variantes :
 - [`install-APISIX.sh`](install-APISIX.sh) installe la variante maintenue ;
 - [`configure-docker-insecure-registries.sh`](configure-docker-insecure-registries.sh) encadre l'exception TLS temporaire utilisée par le workflow APISIX ;
 - [`generate-apisix-demo-config.py`](generate-apisix-demo-config.py) convertit le classeur de démonstration en objets JSON ;
-- [`bootstrap.py`](bootstrap.py) applique ces objets à APISIX et prépare Kibana ;
+- [`bootstrap.py`](bootstrap.py) applique ces objets, les routes OIDC/BFF à APISIX et prépare Kibana ;
 - [`server.py`](server.py) fournit les API fictives interne et partenaire ;
-- [`client.py`](client.py) exécute les appels des scénarios réseau ;
+- [`client.py`](client.py) exécute les appels `key-auth` et obtient en mémoire les jetons OIDC `client_credentials` ;
 - [`start-apisix-demo.sh`](start-apisix-demo.sh), [`run-apisix-demo-scenarios.sh`](run-apisix-demo-scenarios.sh) et [`stop-apisix-demo.sh`](stop-apisix-demo.sh) pilotent la démonstration ;
 - [`install-legacy-poc.sh`](install-legacy-poc.sh) conserve l'ancien installateur à titre documentaire et ne doit pas servir à un nouveau déploiement.
 

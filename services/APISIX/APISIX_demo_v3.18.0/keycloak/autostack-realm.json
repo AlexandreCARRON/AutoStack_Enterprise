@@ -1,0 +1,60 @@
+{
+  "realm": "autostack",
+  "displayName": "AutoStack APISIX Demo",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": true,
+  "accessTokenLifespan": 300,
+  "clients": [
+    {
+      "clientId": "autostack-apisix-bff",
+      "name": "APISIX BFF",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${KEYCLOAK_APISIX_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "${APISIX_PUBLIC_URL}/bff/*"
+      ],
+      "webOrigins": [
+        "${APISIX_PUBLIC_URL}"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "${APISIX_PUBLIC_URL}/*"
+      }
+    },
+    {
+      "clientId": "autostack-partner",
+      "name": "Partenaire A - machine to machine",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "${KEYCLOAK_PARTNER_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "architecte-demo",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Architecte",
+      "lastName": "AutoStack",
+      "email": "architecte-demo@example.invalid",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_DEMO_USER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
