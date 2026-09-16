@@ -20,15 +20,40 @@ readonly RUNTIME_DIR="${DEMO_DIR}/runtime"
 readonly CERT_DIR="${RUNTIME_DIR}/certs"
 readonly GENERATED_DIR="${RUNTIME_DIR}/generated"
 readonly COMPOSE_PROJECT="autostack-apisix-demo"
+readonly TLS_HELPER="${SCRIPT_DIR}/configure-docker-insecure-registries.sh"
+readonly DOCKER_DAEMON_CONFIG="${AUTOSTACK_DOCKER_CONFIG_FILE:-/etc/docker/daemon.json}"
+readonly DEFAULT_APISIX_ADMIN_KEY="42424242424242424242424242424242"
 
-# --yes rend uniquement les confirmations non interactives ; les validations restent actives.
-ASSUME_YES=0
-if [[ "${1:-}" == "--yes" ]]; then
-  ASSUME_YES=1
-elif (( $# > 0 )); then
-  printf 'Usage : %s [--yes]\n' "$0" >&2
-  exit 2
-fi
+# Le parcours est autonome par défaut. --interactive restaure les validations humaines.
+ASSUME_YES=1
+RUN_SCENARIOS=1
+while (($#)); do
+  case "$1" in
+    --yes)
+      ASSUME_YES=1
+      ;;
+    --interactive)
+      ASSUME_YES=0
+      ;;
+    --skip-scenarios)
+      RUN_SCENARIOS=0
+      ;;
+    -h|--help)
+      printf 'Usage : %s [--yes|--interactive] [--skip-scenarios]\n' "$0"
+      exit 0
+      ;;
+    *)
+      printf 'Option inconnue : %s\n' "$1" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+# Mémorise uniquement les exceptions TLS ajoutées par cette exécution.
+TLS_EXCEPTIONS_ACTIVE=0
+TEMPORARY_TLS_REGISTRIES=()
+PULL_LOG=""
 
 # Arrête immédiatement le scénario avec un message homogène et exploitable.
 fail() {
@@ -52,6 +77,86 @@ confirm() {
   [[ -z "$answer" || "$answer" =~ ^[YyOo]$ ]]
 }
 
+# Exécute les rares préparations système avec les privilèges déjà disponibles.
+run_as_root() {
+  if (( EUID == 0 )); then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+# Limite les modifications automatiques de l'hôte à la plateforme de démonstration.
+is_debian_12() {
+  [[ -r /etc/os-release ]] || return 1
+  (
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    [[ "${ID:-}" == "debian" && "${VERSION_ID:-}" == "12" ]]
+  )
+}
+
+# Installe les utilitaires légers attendus par les scripts ; Docker reste un prérequis.
+prepare_host_tools() {
+  local command_name
+  local missing=()
+  for command_name in python3 openssl curl jq; do
+    command -v "$command_name" >/dev/null 2>&1 || missing+=("$command_name")
+  done
+  ((${#missing[@]} == 0)) && return 0
+
+  is_debian_12 || fail "commandes manquantes : ${missing[*]} (installation automatique réservée à Debian 12)"
+  command -v apt-get >/dev/null 2>&1 || fail "apt-get est requis pour installer : ${missing[*]}"
+  printf 'Installation automatique des prérequis : %s\n' "${missing[*]}"
+  run_as_root apt-get update
+  run_as_root apt-get install -y python3 openssl curl jq ca-certificates
+}
+
+# Attend que le daemon redevienne accessible après une modification de daemon.json.
+wait_for_docker() {
+  local _
+  for _ in {1..30}; do
+    docker info >/dev/null 2>&1 && return 0
+    sleep 1
+  done
+  fail "Docker n'est pas redevenu disponible après son redémarrage"
+}
+
+# Retire immédiatement les seules exceptions TLS créées par cette exécution.
+restore_tls_exceptions() {
+  (( TLS_EXCEPTIONS_ACTIVE == 1 )) || return 0
+  printf 'Réactivation de la validation TLS Docker...\n'
+  if run_as_root "$TLS_HELPER" \
+      --remove --yes --config "$DOCKER_DAEMON_CONFIG" -- \
+      "${TEMPORARY_TLS_REGISTRIES[@]}"; then
+    TLS_EXCEPTIONS_ACTIVE=0
+    wait_for_docker
+    printf 'Validation TLS Docker réactivée.\n'
+  else
+    printf '%s\n' \
+      'ERREUR : la restauration TLS automatique a échoué.' \
+      "Retirez manuellement les registres concernés de ${DOCKER_DAEMON_CONFIG}." >&2
+    return 1
+  fi
+}
+
+# Nettoie le journal temporaire et restaure TLS, y compris après une interruption.
+cleanup_on_exit() {
+  local status=$?
+  trap - EXIT INT TERM
+  if [[ -n "$PULL_LOG" && -e "$PULL_LOG" ]]; then
+    rm -f -- "$PULL_LOG"
+  fi
+  if ! restore_tls_exceptions; then
+    status=1
+  fi
+  exit "$status"
+}
+
+trap cleanup_on_exit EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 # Fige le projet, le fichier d'environnement et la variante Compose de la démo.
 compose() {
   docker compose \
@@ -60,6 +165,102 @@ compose() {
     --env-file "$ENV_FILE" \
     -f "$COMPOSE_FILE" \
     "$@"
+}
+
+# Extrait uniquement les hôtes HTTPS présents dans l'erreur de pull Docker.
+detect_failed_tls_registries() {
+  python3 - "$PULL_LOG" <<'PY'
+import re
+import sys
+from pathlib import Path
+from urllib.parse import urlsplit
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
+hosts = []
+for raw_url in re.findall(r"https?://[^\s\"']+", text):
+    host = urlsplit(raw_url.rstrip(".,;:)]}")).netloc
+    if host and re.fullmatch(r"[A-Za-z0-9.-]+(?::[0-9]+)?", host) and host not in hosts:
+        hosts.append(host)
+
+# Quay peut échouer sur son CDN après une redirection signée : les deux hôtes
+# appartiennent au même téléchargement versionné par le fichier Compose.
+if any(host == "quay.io" or host.endswith(".quay.io") for host in hosts):
+    if "quay.io" not in hosts:
+        hosts.insert(0, "quay.io")
+    if "cdn01.quay.io" not in hosts:
+        hosts.append("cdn01.quay.io")
+
+for host in hosts:
+    print(host)
+PY
+}
+
+# Évite les doublons sans développer une liste vide sous `set -u`.
+temporary_registry_contains() {
+  local expected="$1"
+  local existing
+  for existing in "${TEMPORARY_TLS_REGISTRIES[@]-}"; do
+    [[ "$existing" == "$expected" ]] && return 0
+  done
+  return 1
+}
+
+# Essaie d'abord avec TLS strict, puis ouvre et referme une exception ciblée sur X.509.
+pull_images_with_tls_fallback() {
+  mkdir -p "$RUNTIME_DIR"
+  PULL_LOG="$(mktemp "${RUNTIME_DIR}/.docker-pull.XXXXXX")"
+  if compose pull --ignore-buildable 2>&1 | tee "$PULL_LOG"; then
+    rm -f -- "$PULL_LOG"
+    PULL_LOG=""
+    return 0
+  fi
+
+  if ! grep -Eqi 'x509: certificate signed by unknown authority|tls: failed to verify certificate' "$PULL_LOG"; then
+    fail "docker compose pull a échoué sans erreur de certificat TLS ; consultez la sortie ci-dessus"
+  fi
+  is_debian_12 || fail "le contournement TLS automatique est limité à Debian 12"
+  [[ -x "$TLS_HELPER" ]] || fail "assistant TLS introuvable : $TLS_HELPER"
+  command -v systemctl >/dev/null 2>&1 || fail "systemctl est requis pour redémarrer Docker"
+
+  local registry
+  local configured
+  local detected=()
+  local requested=()
+  while IFS= read -r registry; do
+    [[ -n "$registry" ]] && detected+=("$registry")
+  done < <(detect_failed_tls_registries)
+  if [[ -n "${AUTOSTACK_TLS_REGISTRIES:-}" ]]; then
+    # L'administrateur peut compléter les domaines détectés sans modifier le script.
+    read -r -a requested <<<"${AUTOSTACK_TLS_REGISTRIES//,/ }"
+    detected+=("${requested[@]}")
+  fi
+  ((${#detected[@]} > 0)) || fail "aucun domaine TLS exploitable n'a été trouvé dans l'erreur Docker"
+
+  configured="$(run_as_root "$TLS_HELPER" --list --config "$DOCKER_DAEMON_CONFIG")"
+  for registry in "${detected[@]}"; do
+    if ! grep -Fxq -- "$registry" <<<"$configured" \
+        && ! temporary_registry_contains "$registry"; then
+      TEMPORARY_TLS_REGISTRIES+=("$registry")
+    fi
+  done
+  ((${#TEMPORARY_TLS_REGISTRIES[@]} > 0)) || \
+    fail "les domaines en erreur sont déjà non sécurisés ; installez plutôt l'autorité de certification du proxy"
+
+  printf '%s\n' \
+    'Erreur X.509 détectée pendant le pull.' \
+    "Exception TLS temporaire et ciblée : ${TEMPORARY_TLS_REGISTRIES[*]}"
+  run_as_root "$TLS_HELPER" \
+    --add-only --yes --config "$DOCKER_DAEMON_CONFIG" -- \
+    "${TEMPORARY_TLS_REGISTRIES[@]}"
+  TLS_EXCEPTIONS_ACTIVE=1
+  wait_for_docker
+
+  local retry_status=0
+  compose pull --ignore-buildable || retry_status=$?
+  restore_tls_exceptions || retry_status=1
+  (( retry_status == 0 )) || fail "le pull Docker échoue encore après le contournement TLS temporaire"
+  rm -f -- "$PULL_LOG"
+  PULL_LOG=""
 }
 
 # Remplace une variable précise sans exposer ni réordonner les autres secrets du fichier.
@@ -85,7 +286,7 @@ path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 }
 
-# Crée le fichier privé et ne régénère que les secrets absents ou encore factices.
+# Crée le fichier privé, impose la clé Admin de démo et génère les autres secrets.
 initialize_environment() {
   if [[ ! -f "$ENV_FILE" ]]; then
     install -m 600 "${DEMO_DIR}/.env.example" "$ENV_FILE"
@@ -94,9 +295,11 @@ initialize_environment() {
     chmod 600 "$ENV_FILE"
   fi
 
+  replace_env_value APISIX_ADMIN_KEY "$DEFAULT_APISIX_ADMIN_KEY"
+  printf 'Clé Admin APISIX de démonstration configurée.\n'
+
   local key
   for key in \
-    APISIX_ADMIN_KEY \
     DEMO_PARTNER_API_KEY \
     DEMO_INTERNAL_API_KEY \
     DEMO_PARTNER_BACKEND_API_KEY \
@@ -200,8 +403,11 @@ prepare_elasticsearch_host() {
 # Orchestre les prérequis, la génération, le démarrage puis le bootstrap fonctionnel.
 main() {
   require_command docker
+  prepare_host_tools
   require_command openssl
   require_command python3
+  require_command curl
+  require_command jq
   docker info >/dev/null 2>&1 || fail "Docker n'est pas démarré ou l'utilisateur n'a pas accès au daemon"
   docker compose version >/dev/null 2>&1 || fail "le plugin Docker Compose est indisponible"
   [[ -f "$WORKBOOK" ]] || fail "classeur introuvable : $WORKBOOK"
@@ -228,21 +434,30 @@ PY
   # La validation Compose précède toute opération réseau ou création de conteneur.
   compose config --quiet
   if confirm "Télécharger/construire les images et démarrer la démonstration ?"; then
-    compose pull --ignore-buildable
+    pull_images_with_tls_fallback
     compose build
     compose up -d --wait --wait-timeout 360
+    # Recharge aussi les changements d'un config.yaml monté dans un conteneur existant.
+    compose restart apisix
     compose --profile tools run --rm demo-configurator
   else
     fail "démarrage annulé"
   fi
 
   compose ps
+  if (( RUN_SCENARIOS == 1 )); then
+    printf '\nValidation automatique des six scénarios de démonstration...\n'
+    "${SCRIPT_DIR}/run-apisix-demo-scenarios.sh"
+  fi
   printf '%s\n' \
     '' \
-    'Démonstration prête. Lancez depuis la racine du service :' \
-    '  ./scripts/run-apisix-demo-scenarios.sh' \
+    'Installation, configuration et validation terminées.' \
+    "Clé Admin APISIX : ${DEFAULT_APISIX_ADMIN_KEY}" \
+    'Pour rejouer les scénarios : ./scripts/run-apisix-demo-scenarios.sh' \
     "Console Keycloak : ${KEYCLOAK_PUBLIC_URL:-http://127.0.0.1:8080}/admin/" \
     "Parcours BFF : ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}/bff/orders"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

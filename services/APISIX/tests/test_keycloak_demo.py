@@ -20,6 +20,11 @@ REALM_FILE = (
 )
 BOOTSTRAP_FILE = SERVICE_ROOT / "scripts" / "bootstrap.py"
 CLIENT_FILE = SERVICE_ROOT / "scripts" / "client.py"
+START_SCRIPT = SERVICE_ROOT / "scripts" / "start-apisix-demo.sh"
+DEMO_ENV_EXAMPLE = SERVICE_ROOT / "APISIX_demo_v3.18.0" / ".env.example"
+APISIX_CONFIG = (
+    SERVICE_ROOT / "APISIX_demo_v3.18.0" / "apisix" / "config.yaml"
+)
 
 
 def load_module(name: str, path: Path):
@@ -46,6 +51,22 @@ class FakeResponse:
 
 
 class KeycloakDemoTests(unittest.TestCase):
+    def test_start_script_is_autonomous_and_restores_tls(self) -> None:
+        script = START_SCRIPT.read_text(encoding="utf-8")
+
+        self.assertIn(
+            'DEFAULT_APISIX_ADMIN_KEY="42424242424242424242424242424242"',
+            script,
+        )
+        self.assertIn("ASSUME_YES=1", script)
+        self.assertIn("pull_images_with_tls_fallback", script)
+        self.assertIn("restore_tls_exceptions", script)
+        self.assertIn('"${SCRIPT_DIR}/run-apisix-demo-scenarios.sh"', script)
+
+        admin_key = "42424242424242424242424242424242"
+        self.assertIn(f"APISIX_ADMIN_KEY={admin_key}", DEMO_ENV_EXAMPLE.read_text())
+        self.assertIn(f'key: "{admin_key}"', APISIX_CONFIG.read_text())
+
     def test_realm_uses_only_environment_backed_secrets(self) -> None:
         realm = json.loads(REALM_FILE.read_text(encoding="utf-8"))
         self.assertEqual(realm["realm"], "autostack")

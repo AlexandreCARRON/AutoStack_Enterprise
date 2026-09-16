@@ -2,7 +2,7 @@
 id: autostack.apisix.demo
 kind: guide
 status: active
-last_reviewed: 2026-09-15
+last_reviewed: 2026-09-16
 sensitivity: public
 sources: ["services/APISIX/APISIX_v3.18.0/fichiers/AutoStack_Demo_APISIX.xlsx", "https://apisix.apache.org/docs/apisix/plugins/key-auth/", "https://apisix.apache.org/docs/apisix/plugins/openid-connect/", "https://apisix.apache.org/docs/apisix/plugins/http-logger/", "https://apisix.apache.org/docs/apisix/mtls/", "https://www.keycloak.org/server/containers", "https://www.keycloak.org/server/importExport", "https://documentation.gravitee.io/apim/how-to-guides/use-case-tutorials/implement-bff-pattern-with-a-shared-policy-group", "https://www.elastic.co/docs/deploy-manage/deploy/self-managed/vm-max-map-count"]
 ---
@@ -74,7 +74,9 @@ sudo apt update
 sudo apt install -y python3 openssl curl jq
 ```
 
-Le lanceur vérifie `vm.max_map_count` et propose de l'appliquer temporairement. Pour rendre le réglage persistant après validation par l'administrateur :
+Le lanceur installe automatiquement `python3`, `openssl`, `curl`, `jq` et `ca-certificates` s'ils manquent sur Debian 12. Docker Engine et son plugin Compose doivent déjà être installés et démarrés. Il applique aussi temporairement `vm.max_map_count=1048576` si nécessaire. Une saisie du mot de passe `sudo` peut rester nécessaire selon la configuration de la VM.
+
+Pour rendre le réglage Elasticsearch persistant :
 
 ```bash
 echo 'vm.max_map_count=1048576' | sudo tee /etc/sysctl.d/99-elasticsearch.conf
@@ -91,29 +93,31 @@ Depuis la racine du dossier APISIX (`cd services/APISIX` dans le dépôt complet
 
 Le script effectue les opérations suivantes :
 
-1. crée un `.env` local ignoré par Git et génère les clés APISIX, Keycloak et OIDC si nécessaire ;
+1. crée un `.env` local ignoré par Git, impose la clé Admin APISIX de démonstration `42424242424242424242424242424242` et génère les autres secrets si nécessaire ;
 2. génère une autorité de certification et les certificats mTLS de démonstration dans `runtime/` ;
 3. lit le classeur `AutoStack_Demo_APISIX.xlsx` et produit les objets APISIX attendus ;
 4. démarre PostgreSQL et Keycloak, puis importe le realm `autostack` au premier lancement ;
 5. télécharge et construit les autres images, puis attend les contrôles de santé ;
 6. charge les upstreams, routes `key-auth`, routes OIDC, consommateurs et credentials dans APISIX ;
-7. crée la vue de données `apisix-demo-*` dans Kibana.
+7. crée la vue de données `apisix-demo-*` dans Kibana ;
+8. exécute les six scénarios de validation et ne rend la main que lorsque la démonstration est prête.
 
-Une relance est idempotente : elle conserve les secrets, certificats et volumes existants, puis applique à nouveau la configuration du classeur. L'option `--yes` accepte les confirmations non destructives :
+Une relance est idempotente : elle conserve les secrets, certificats et volumes existants, puis applique à nouveau la configuration du classeur. Le parcours est non interactif par défaut. Pour rétablir les confirmations ou ne pas rejouer les scénarios :
 
 ```bash
-./scripts/start-apisix-demo.sh --yes
+./scripts/start-apisix-demo.sh --interactive
+./scripts/start-apisix-demo.sh --skip-scenarios
 ```
 
-Si un `docker pull` échoue avec `x509: certificate signed by unknown authority`, installez de préférence l'autorité de certification de votre proxy. Pour le contournement temporaire réservé à la VM de test, utilisez le script documenté dans le [guide APISIX](README.md#contournement-temporaire-dune-inspection-tls), puis effectuez le démarrage de la démo dans la seconde fenêtre shell avant de réactiver TLS.
+Si le premier `docker pull` échoue avec `x509: certificate signed by unknown authority`, le lanceur relève les domaines présents dans l'erreur, ajoute uniquement les exceptions Docker absentes, redémarre Docker, retente le téléchargement, puis retire immédiatement ses propres exceptions. La restauration est également déclenchée lors d'une interruption. Ce contournement automatique est limité à Debian 12 ; installer l'autorité de certification du proxy reste la correction durable.
 
-## Validation automatisée de la démonstration
+## Rejouer la validation automatisée
 
 ```bash
 ./scripts/run-apisix-demo-scenarios.sh
 ```
 
-Le script vérifie successivement :
+Le lanceur exécute déjà cette validation. La commande ci-dessus permet de la rejouer et vérifie successivement :
 
 1. le refus HTTP `401` d'une requête sans clé ;
 2. l'accès du partenaire à l'API interne avec son identité APISIX ;

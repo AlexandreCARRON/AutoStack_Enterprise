@@ -35,6 +35,7 @@ registres nécessaires, attend la fin du pull, réactive TLS puis démarre Compo
 Options:
   --add-only     Ajouter les registres sans lancer l'assistant interactif.
   --remove       Retirer les registres sans lancer l'assistant interactif.
+  --list         Afficher les registres non sécurisés déjà configurés.
   --yes          Ne pas demander de confirmation.
   --no-restart   Modifier le fichier sans redémarrer Docker.
   --config PATH  Utiliser un autre daemon.json.
@@ -42,6 +43,7 @@ Options:
 
 Exemples:
   sudo ./scripts/configure-docker-insecure-registries.sh
+  sudo ./scripts/configure-docker-insecure-registries.sh --list
   sudo ./scripts/configure-docker-insecure-registries.sh --add-only --yes registry.example.net
   sudo ./scripts/configure-docker-insecure-registries.sh --remove --yes
 EOF
@@ -201,6 +203,11 @@ while (($#)); do
       ACTION="remove"
       shift
       ;;
+    --list)
+      ACTION="list"
+      RESTART_DOCKER=0
+      shift
+      ;;
     --yes)
       ASSUME_YES=1
       shift
@@ -252,6 +259,33 @@ fi
 
 if ((RESTART_DOCKER)) && [[ "$EUID" -ne 0 ]]; then
   fail "le redémarrage de Docker exige sudo."
+fi
+
+# Le mode lecture permet au lanceur de ne retirer ensuite que ses propres ajouts.
+if [[ "$ACTION" == "list" ]]; then
+  python3 - "$CONFIG_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.exists() or not path.stat().st_size:
+    raise SystemExit(0)
+
+try:
+    with path.open(encoding="utf-8") as stream:
+        config = json.load(stream)
+except (OSError, json.JSONDecodeError) as error:
+    raise SystemExit(f"Erreur : configuration Docker illisible : {error}")
+
+registries = config.get("insecure-registries", [])
+if not isinstance(registries, list) or not all(isinstance(item, str) for item in registries):
+    raise SystemExit("Erreur : insecure-registries doit être une liste de chaînes.")
+
+for registry in registries:
+    print(registry)
+PY
+  exit 0
 fi
 
 # Le mode guidé réutilise ce même script pour les opérations add/remove idempotentes.

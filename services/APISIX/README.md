@@ -2,7 +2,7 @@
 id: autostack.apisix
 kind: guide
 status: active
-last_reviewed: 2026-09-15
+last_reviewed: 2026-09-16
 sensitivity: public
 sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://apisix.apache.org/docs/apisix/plugins/openid-connect/", "https://www.keycloak.org/server/containers", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
 ---
@@ -25,6 +25,14 @@ Les adresses et ports hôtes sont configurables dans `.env`. L'Admin API exige t
 La variante `APISIX_demo_v3.18.0` ajoute Keycloak avec PostgreSQL, une API interne fictive, un partenaire HTTPS avec mTLS et une chaîne Logstash → Elasticsearch → Kibana. Elle démontre `key-auth`, OpenID Connect en machine-à-machine et un parcours navigateur de type BFF, sans modifier la variante minimale par défaut.
 
 Le [guide de démonstration](DEMO.md) décrit l'architecture, le démarrage automatisé, l'accès depuis VirtualBox et les scénarios de validation.
+
+Le parcours complet se lance sans paramétrage applicatif manuel :
+
+```bash
+./scripts/start-apisix-demo.sh
+```
+
+Le lanceur configure la clé Admin de démonstration `42424242424242424242424242424242`, prépare Keycloak et Kibana, puis exécute les six scénarios fonctionnels avant de rendre la main.
 
 ## Démarrage autonome recommandé
 
@@ -54,13 +62,15 @@ Le Dashboard est alors disponible sur <http://127.0.0.1:9180/ui/>. Saisissez la 
 
 ## Contournement temporaire d'une inspection TLS
 
-Si `docker compose pull` échoue avec `x509: certificate signed by unknown authority` parce qu'un proxy d'entreprise intercepte Quay, la correction recommandée consiste à installer l'autorité de certification de l'entreprise. Pour un environnement de test Debian 12 où cette correction n'est pas possible, un script peut déclarer temporairement les hôtes Quay comme registres non sécurisés :
+Si `docker compose pull` échoue avec `x509: certificate signed by unknown authority` parce qu'un proxy d'entreprise intercepte un registre, la correction recommandée consiste à installer l'autorité de certification de l'entreprise. Le lanceur de démonstration traite automatiquement ce cas sur Debian 12 : il relève les domaines de l'erreur, n'ajoute que les exceptions absentes, retente le pull et réactive TLS avant de poursuivre.
+
+L'assistant séparé reste disponible pour un diagnostic manuel de la variante minimale :
 
 ```bash
 sudo ./scripts/configure-docker-insecure-registries.sh
 ```
 
-Le script explique comment identifier les domaines en erreur et demande leur liste. Il fusionne ensuite les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Pendant qu'il attend, effectuez le pull dans une autre fenêtre shell. Après confirmation, le script retire les exceptions, réactive TLS, redémarre Docker et propose de démarrer la stack APISIX avec Compose. En cas d'interruption, il tente également de retirer automatiquement les exceptions avant de quitter.
+Le script explique comment identifier les domaines en erreur et demande leur liste. Il fusionne ensuite les valeurs dans `/etc/docker/daemon.json`, conserve les autres réglages, crée une sauvegarde, valide le fichier et redémarre Docker. Après confirmation, il retire les exceptions, réactive TLS et redémarre Docker. En cas d'interruption, il tente également de retirer automatiquement les exceptions avant de quitter.
 
 Cette option affaiblit la vérification de l'origine et de l'intégrité des images. Ne l'utilisez pas en production et ne configurez pas un domaine plus large que nécessaire.
 

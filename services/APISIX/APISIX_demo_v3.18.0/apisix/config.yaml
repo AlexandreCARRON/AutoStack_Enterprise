@@ -18,7 +18,8 @@ deployment:
       - 0.0.0.0/0
     admin_key:
       - name: admin
-        key: ${{APISIX_ADMIN_KEY}}
+        # Clé publique et volontairement fixe pour le seul laboratoire de démonstration.
+        key: "42424242424242424242424242424242"
         role: admin
 
   etcd:
