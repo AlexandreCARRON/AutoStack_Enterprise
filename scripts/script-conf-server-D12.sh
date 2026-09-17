@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # Arrêter le script à la première erreur et détecter les erreurs dans les pipelines.
-set -Eeuo pipefail
+# Sans errexit : le gestionnaire d'erreur propose d'arrêter ou de poursuivre.
+set -Euo pipefail
 
 # Couleurs ANSI, désactivées hors terminal ou si NO_COLOR est défini.
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -17,13 +18,51 @@ else
 fi
 
 info() { printf '%s[INFO]%s %s\n' "$YELLOW" "$RESET" "$*"; }
-ok()   { printf '%s[OK]%s %s\n' "$GREEN" "$RESET" "$*"; }
+
+CONTINUED_AFTER_ERROR=0
+ERROR_SINCE_LAST_OK=0
+
+ok() {
+  if [[ "$ERROR_SINCE_LAST_OK" == "1" ]]; then
+    warn "Étape non marquée OK après une erreur précédente : $*"
+    ERROR_SINCE_LAST_OK=0
+  else
+    printf '%s[OK]%s %s\n' "$GREEN" "$RESET" "$*"
+  fi
+}
 warn() { printf '%s[ATTENTION]%s %s\n' "$YELLOW" "$RESET" "$*"; }
 fail() { printf '%s[ERREUR]%s %s\n' "$RED" "$RESET" "$*" >&2; }
 
-# Afficher en rouge la commande et la ligne à l'origine d'une erreur non gérée.
-trap 'rc=$?; fail "Échec ligne $LINENO : $BASH_COMMAND (code $rc)"; exit "$rc"' ERR
+handle_error() {
+  local rc="$1"
+  local error_line="$2"
+  local failed_command="$3"
+  local response=''
 
+  fail "Échec ligne $error_line : $failed_command (code $rc)"
+
+  if [[ -t 0 ]]; then
+    printf '%sContinuer malgré l’erreur ? (y/N) %s' "$YELLOW" "$RESET" >&2
+    if ! IFS= read -r response; then
+      response=''
+    fi
+  else
+    warn "Entrée non interactive : arrêt par défaut (N)."
+  fi
+
+  if [[ "${response,,}" == "y" ]]; then
+    CONTINUED_AFTER_ERROR=1
+    ERROR_SINCE_LAST_OK=1
+    warn "Poursuite du script à la demande de l’utilisateur."
+    return 0
+  fi
+
+  fail "Arrêt du script après l’erreur."
+  exit "$rc"
+}
+
+# Les erreurs de commande déclenchent la question y/N.
+trap 'rc=$?; handle_error "$rc" "$LINENO" "$BASH_COMMAND"' ERR
 
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_DIR
@@ -136,11 +175,12 @@ echo "######### Les paramètre spécifiques de surveillance de protocols ont ét
 
 # Vérifier la configuration de Fail2Ban
 echo "### Vérification de la configuration de Fail2Ban..."
-if ! sudo fail2ban-client -d; then
-  fail "Configuration Fail2Ban invalide. Vérifie le fichier /etc/fail2ban/jail.local."
-  exit 1
+if sudo fail2ban-client -d; then
+  ok "Configuration Fail2Ban vérifiée."
+else
+  rc=$?
+  handle_error "$rc" "$LINENO" "sudo fail2ban-client -d"
 fi
-ok "Configuration Fail2Ban vérifiée."
 
 # Redémarrer Fail2Ban
 echo "######### Redémarrage de Fail2Ban..."
@@ -260,6 +300,9 @@ ok "Port SSH changé vers $NEW_PORT_SSH et service redémarré. Ajoute '-p $NEW_
 ok "Fin de l'exécution du script de paramétrage automatique."
 warn "Le serveur va redémarrer si tu confirmes."
 warn "Assure-toi de connaître le nom du nouvel utilisateur et son mot de passe : le compte actuel a été désactivé."
+if [[ "$CONTINUED_AFTER_ERROR" == "1" ]]; then
+  warn "Le script a poursuivi après au moins une erreur; vérifie les étapes précédentes."
+fi
 
 read -r -p "=> USER - Voulez-vous afficher le nom du nouvel utilisateur que vous venez de créer ? (Y/n) " response
 response=${response,,} # Convertir en minuscule
@@ -296,5 +339,9 @@ if [[ "$response" == "y" || -z "$response" ]]; then
 else
     warn "Redémarrage annulé. Tu pourras redémarrer manuellement plus tard."
     warn "Le fichier /home/debian/.env n'a pas été supprimé et contient encore des informations sensibles; supprime-le."
+fi
 
+if [[ "$CONTINUED_AFTER_ERROR" == "1" ]]; then
+  fail "Le script s'est terminé après avoir poursuivi malgré une ou plusieurs erreurs."
+  exit 1
 fi
