@@ -27,7 +27,7 @@ trap 'rc=$?; fail "Échec ligne $LINENO : $BASH_COMMAND (code $rc)"; exit "$rc"'
 
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly REPO_DIR
-cd "$REPO_DIR" || exit 1
+cd "$REPO_DIR" || { fail "Impossible d’accéder au répertoire du dépôt : $REPO_DIR."; exit 1; }
 
 # ********************************************************************* Charger les variables d'environnement à partir du fichier .env *************************************
 if [ -f "${REPO_DIR}/.env" ]; then
@@ -286,7 +286,7 @@ if [[ "$response" == "y" || -z "$response" ]]; then
     echo "###### Suppression de l'ensemble des fichiers contenus dans /home/debian/[repo-précédement-chargé]"
     sudo rm -rf /home/debian/AutoStack_Enterprise
     echo "###### Copie du repo vierge vers le nouvel utilisateur"
-    cd "/home/${NEW_USER}" || exit 1
+    cd "/home/${NEW_USER}" || { fail "Impossible d’accéder à /home/${NEW_USER}."; exit 1; }
     sudo git clone https://github.com/AlexandreCARRON/AutoStack_Enterprise.git
     ok "Dépôt cloné sous /home/$NEW_USER."
     sudo chmod +x "/home/${NEW_USER}/AutoStack_Enterprise/scripts/generate-docker-compose.sh"
