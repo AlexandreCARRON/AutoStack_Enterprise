@@ -7,6 +7,7 @@ conteneur réconcilie donc la configuration sans dupliquer les ressources.
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -21,6 +22,8 @@ from typing import Any
 ADMIN_URL = os.environ.get("APISIX_ADMIN_URL", "http://apisix:9180").rstrip("/")
 ADMIN_KEY = os.environ["APISIX_ADMIN_KEY"]
 KIBANA_URL = os.environ.get("KIBANA_URL", "http://kibana:5601").rstrip("/")
+KIBANA_USERNAME = os.environ.get("KIBANA_USERNAME", "admin")
+KIBANA_PASSWORD = os.environ["KIBANA_PASSWORD"]
 LOGSTASH_URL = os.environ.get("LOGSTASH_URL", "http://logstash:8080").rstrip("/")
 KEYCLOAK_INTERNAL_URL = os.environ.get("KEYCLOAK_INTERNAL_URL", "http://keycloak:8080").rstrip("/")
 KEYCLOAK_REALM = "autostack"
@@ -29,6 +32,12 @@ APISIX_PUBLIC_URL = os.environ.get("APISIX_PUBLIC_URL", "http://127.0.0.1:9080")
 GENERATED_DIR = Path("/demo/generated")
 CERT_DIR = Path("/demo/certs")
 ENV_PATTERN = re.compile(r"\$\{([A-Z_][A-Z0-9_]*)\}")
+
+
+# Authentifie les appels de préparation Kibana avec le compte humain de démonstration.
+def kibana_headers() -> dict[str, str]:
+    credentials = base64.b64encode(f"{KIBANA_USERNAME}:{KIBANA_PASSWORD}".encode()).decode("ascii")
+    return {"Authorization": f"Basic {credentials}"}
 
 
 # Remplace récursivement les marqueurs ${VARIABLE} au dernier moment seulement.
@@ -265,7 +274,7 @@ def configure_kibana() -> None:
         "POST",
         f"{KIBANA_URL}/api/data_views/data_view",
         payload,
-        {"kbn-xsrf": "autostack-demo"},
+        {"kbn-xsrf": "autostack-demo", **kibana_headers()},
         timeout=20,
     )
     if status not in {200, 201}:
@@ -282,7 +291,7 @@ def configure_kibana() -> None:
         "POST",
         f"{KIBANA_URL}/api/data_views/default",
         {"data_view_id": data_view_id, "force": True},
-        {"kbn-xsrf": "autostack-demo"},
+        {"kbn-xsrf": "autostack-demo", **kibana_headers()},
         timeout=20,
     )
     if default_status != 200:
@@ -305,7 +314,13 @@ def main() -> int:
         )
         wait_for("Keycloak", "GET", OIDC_DISCOVERY, attempts=150)
         wait_for("Logstash HTTP input", "GET", f"{LOGSTASH_URL}/health")
-        wait_for("Kibana", "GET", f"{KIBANA_URL}/api/status", attempts=150)
+        wait_for(
+            "Kibana",
+            "GET",
+            f"{KIBANA_URL}/api/status",
+            kibana_headers(),
+            attempts=150,
+        )
         configure_apisix()
         configure_kibana()
     except (KeyError, OSError, RuntimeError, urllib.error.URLError, json.JSONDecodeError) as exc:

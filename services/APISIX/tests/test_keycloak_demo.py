@@ -19,6 +19,7 @@ REALM_FILE = (
     / "autostack-realm.json"
 )
 BOOTSTRAP_FILE = SERVICE_ROOT / "scripts" / "bootstrap.py"
+ELASTIC_SETUP_FILE = SERVICE_ROOT / "scripts" / "setup-elastic.py"
 CLIENT_FILE = SERVICE_ROOT / "scripts" / "client.py"
 START_SCRIPT = SERVICE_ROOT / "scripts" / "start-apisix-demo.sh"
 DEMO_ENV_EXAMPLE = SERVICE_ROOT / "APISIX_demo_v3.18.0" / ".env.example"
@@ -55,7 +56,7 @@ class KeycloakDemoTests(unittest.TestCase):
         script = START_SCRIPT.read_text(encoding="utf-8")
 
         self.assertIn(
-            'DEFAULT_APISIX_ADMIN_KEY="42424242424242424242424242424242"',
+            'DEFAULT_ADMIN_PASSWORD="42424242424242424242424242424242"',
             script,
         )
         self.assertIn("ASSUME_YES=1", script)
@@ -65,6 +66,8 @@ class KeycloakDemoTests(unittest.TestCase):
 
         admin_key = "42424242424242424242424242424242"
         self.assertIn(f"APISIX_ADMIN_KEY={admin_key}", DEMO_ENV_EXAMPLE.read_text())
+        self.assertIn(f"KEYCLOAK_ADMIN_PASSWORD={admin_key}", DEMO_ENV_EXAMPLE.read_text())
+        self.assertIn(f"ELASTIC_ADMIN_PASSWORD={admin_key}", DEMO_ENV_EXAMPLE.read_text())
         self.assertIn(f'key: "{admin_key}"', APISIX_CONFIG.read_text())
 
     def test_realm_uses_only_environment_backed_secrets(self) -> None:
@@ -87,6 +90,7 @@ class KeycloakDemoTests(unittest.TestCase):
         environment = {
             "APISIX_ADMIN_KEY": "test-admin-key",
             "APISIX_OIDC_SESSION_SECRET": "0123456789abcdef0123456789abcdef",
+            "KIBANA_PASSWORD": "test-kibana-password",
         }
         with mock.patch.dict(os.environ, environment):
             bootstrap = load_module("autostack_apisix_bootstrap", BOOTSTRAP_FILE)
@@ -100,6 +104,14 @@ class KeycloakDemoTests(unittest.TestCase):
             self.assertTrue(bff["use_pkce"])
             self.assertTrue(bff["session"]["cookie_http_only"])
             self.assertEqual(bff["session"]["cookie_same_site"], "Lax")
+
+    def test_elastic_setup_keeps_service_accounts_separate(self) -> None:
+        script = ELASTIC_SETUP_FILE.read_text(encoding="utf-8")
+
+        self.assertIn('ADMIN_USERNAME = os.environ.get("ELASTIC_ADMIN_USERNAME", "admin")', script)
+        self.assertIn('"roles": ["superuser"]', script)
+        self.assertIn('LOGSTASH_USERNAME = os.environ.get("ELASTIC_LOGSTASH_USERNAME", "logstash_internal")', script)
+        self.assertIn('"roles": ["autostack_logstash_writer"]', script)
 
     def test_client_credentials_token_is_kept_in_memory(self) -> None:
         environment = {

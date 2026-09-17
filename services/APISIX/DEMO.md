@@ -2,7 +2,7 @@
 id: autostack.apisix.demo
 kind: guide
 status: active
-last_reviewed: 2026-09-16
+last_reviewed: 2026-09-17
 sensitivity: public
 sources: ["services/APISIX/APISIX_v3.18.0/fichiers/AutoStack_Demo_APISIX.xlsx", "https://apisix.apache.org/docs/apisix/plugins/key-auth/", "https://apisix.apache.org/docs/apisix/plugins/openid-connect/", "https://apisix.apache.org/docs/apisix/plugins/http-logger/", "https://apisix.apache.org/docs/apisix/mtls/", "https://www.keycloak.org/server/containers", "https://www.keycloak.org/server/importExport", "https://documentation.gravitee.io/apim/how-to-guides/use-case-tutorials/implement-bff-pattern-with-a-shared-policy-group", "https://www.elastic.co/docs/deploy-manage/deploy/self-managed/vm-max-map-count"]
 ---
@@ -93,16 +93,16 @@ Depuis la racine du dossier APISIX (`cd services/APISIX` dans le dépôt complet
 
 Le script effectue les opérations suivantes :
 
-1. crée un `.env` local ignoré par Git, impose la clé Admin APISIX de démonstration `42424242424242424242424242424242` et génère les autres secrets si nécessaire ;
+1. crée un `.env` local ignoré par Git, impose `admin` / `42424242424242424242424242424242` pour les interfaces Keycloak et Kibana, réutilise ce mot de passe comme clé Admin APISIX et génère les secrets techniques ;
 2. génère une autorité de certification et les certificats mTLS de démonstration dans `runtime/` ;
 3. lit le classeur `AutoStack_Demo_APISIX.xlsx` et produit les objets APISIX attendus ;
-4. démarre PostgreSQL et Keycloak, puis importe le realm `autostack` au premier lancement ;
-5. télécharge et construit les autres images, puis attend les contrôles de santé ;
+4. démarre PostgreSQL et Keycloak, importe le realm `autostack` au premier lancement et réconcilie le compte administrateur d'un volume existant ;
+5. active l'authentification Elastic, crée l'administrateur Kibana et les comptes techniques, puis attend les contrôles de santé ;
 6. charge les upstreams, routes `key-auth`, routes OIDC, consommateurs et credentials dans APISIX ;
 7. crée la vue de données `apisix-demo-*` dans Kibana ;
 8. exécute les six scénarios de validation et ne rend la main que lorsque la démonstration est prête.
 
-Une relance est idempotente : elle conserve les secrets, certificats et volumes existants, puis applique à nouveau la configuration du classeur. Le parcours est non interactif par défaut. Pour rétablir les confirmations ou ne pas rejouer les scénarios :
+Une relance est idempotente : elle conserve les secrets techniques, certificats et volumes existants, réconcilie les accès administrateur, puis applique à nouveau la configuration du classeur. Le parcours est non interactif par défaut. Pour rétablir les confirmations ou ne pas rejouer les scénarios :
 
 ```bash
 ./scripts/start-apisix-demo.sh --interactive
@@ -128,7 +128,7 @@ Le lanceur exécute déjà cette validation. La commande ci-dessus permet de la 
 
 ## Démonstration Keycloak et BFF
 
-La console Keycloak est disponible sur <http://127.0.0.1:8080/admin/>. Les identifiants administrateur et utilisateur sont générés dans le `.env` local :
+La console Keycloak est disponible sur <http://127.0.0.1:8080/admin/>. Son compte administrateur est `admin` / `42424242424242424242424242424242`. Le mot de passe de l'utilisateur applicatif reste généré dans le `.env` local :
 
 ```bash
 grep -E '^(KEYCLOAK_ADMIN_USERNAME|KEYCLOAK_ADMIN_PASSWORD|KEYCLOAK_DEMO_USER_PASSWORD)=' \
@@ -170,10 +170,20 @@ Depuis un navigateur lancé dans la VM :
 - Kibana Discover : <http://127.0.0.1:5601/app/discover> ;
 - Elasticsearch : <http://127.0.0.1:9200>.
 
-La clé du Dashboard se trouve dans le `.env` local :
+Les accès humains de la démonstration sont homogènes :
+
+| Interface | Utilisateur | Mot de passe ou clé |
+| --- | --- | --- |
+| Dashboard APISIX | aucun champ utilisateur | `42424242424242424242424242424242` |
+| Console Keycloak | `admin` | `42424242424242424242424242424242` |
+| Kibana | `admin` | `42424242424242424242424242424242` |
+| API Elasticsearch | `admin` | `42424242424242424242424242424242` |
+
+APISIX demande uniquement une clé Admin, car son Dashboard embarqué ne possède pas de couple utilisateur/mot de passe. Les valeurs effectivement appliquées se trouvent dans le `.env` local :
 
 ```bash
-grep '^APISIX_ADMIN_KEY=' APISIX_demo_v3.18.0/.env
+grep -E '^(APISIX_ADMIN_KEY|KEYCLOAK_ADMIN_USERNAME|KEYCLOAK_ADMIN_PASSWORD|ELASTIC_ADMIN_USERNAME|ELASTIC_ADMIN_PASSWORD)=' \
+  APISIX_demo_v3.18.0/.env
 ```
 
 Depuis la machine hôte VirtualBox, le moyen le plus sûr consiste à ouvrir un tunnel SSH :
@@ -237,4 +247,4 @@ Cette seconde commande demande une confirmation et efface les routes APISIX, le 
 
 ## Limites de sécurité
 
-Cette variante désactive l'authentification d'Elasticsearch et de Kibana, qui ne sont liés qu'à `127.0.0.1`. Keycloak fonctionne en mode `start-dev` sur HTTP avec `sslRequired=none`. Les cookies BFF ne portent donc pas l'attribut `Secure` dans cette démo locale. Les certificats mTLS sont auto-signés, valables 30 jours et réservés à la démonstration. Ne réutilisez ni les clés, ni les mots de passe, ni cette configuration dans un environnement de production.
+Cette variante active l'authentification d'Elasticsearch et de Kibana, crée un compte humain commun et réserve des comptes techniques distincts aux échanges Kibana/Logstash. Les ports d'administration restent liés à `127.0.0.1`, mais les échanges Elastic locaux restent en HTTP. Keycloak fonctionne en mode `start-dev` sur HTTP avec `sslRequired=none`. Les cookies BFF ne portent donc pas l'attribut `Secure` dans cette démo locale. Les certificats mTLS sont auto-signés, valables 30 jours et réservés à la démonstration. Le mot de passe partagé est volontairement public et prévisible : ne réutilisez ni les clés, ni les mots de passe, ni cette configuration dans un environnement de production.

@@ -192,8 +192,10 @@ services:
     restart: unless-stopped
     environment:
       discovery.type: single-node
-      xpack.security.enabled: "false"
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
       xpack.ml.enabled: "false"
+      ELASTIC_PASSWORD: ${ELASTIC_BOOTSTRAP_PASSWORD:?Définir ELASTIC_BOOTSTRAP_PASSWORD}
       ES_JAVA_OPTS: -Xms768m -Xmx768m
     mem_limit: ${ELASTICSEARCH_MEMORY:-1536m}
     volumes:
@@ -201,7 +203,7 @@ services:
     ports:
       - "${ELASTICSEARCH_BIND_ADDRESS:-127.0.0.1}:${ELASTICSEARCH_PORT:-9200}:9200/tcp"
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      test: ["CMD-SHELL", "curl --fail --silent --user elastic:$${ELASTIC_PASSWORD} http://127.0.0.1:9200/_cluster/health >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -210,18 +212,42 @@ services:
       - demo-management
       - demo-observability
 
+  elastic-setup:
+    image: ${DEMO_API_IMAGE:-python:3.12-slim-bookworm}
+    restart: "no"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTIC_BOOTSTRAP_PASSWORD: ${ELASTIC_BOOTSTRAP_PASSWORD:?Définir ELASTIC_BOOTSTRAP_PASSWORD}
+      ELASTIC_ADMIN_USERNAME: ${ELASTIC_ADMIN_USERNAME:-admin}
+      ELASTIC_ADMIN_PASSWORD: ${ELASTIC_ADMIN_PASSWORD:?Définir ELASTIC_ADMIN_PASSWORD}
+      ELASTIC_KIBANA_SYSTEM_PASSWORD: ${ELASTIC_KIBANA_SYSTEM_PASSWORD:?Définir ELASTIC_KIBANA_SYSTEM_PASSWORD}
+      ELASTIC_LOGSTASH_USERNAME: ${ELASTIC_LOGSTASH_USERNAME:-logstash_internal}
+      ELASTIC_LOGSTASH_PASSWORD: ${ELASTIC_LOGSTASH_PASSWORD:?Définir ELASTIC_LOGSTASH_PASSWORD}
+    volumes:
+      - ${AUTOSTACK_APISIX_DIR:-..}/scripts/setup-elastic.py:/demo/setup-elastic.py:ro
+    command: ["python", "/demo/setup-elastic.py"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - demo-observability
+    security_opt:
+      - no-new-privileges:true
+
   logstash:
     image: docker.elastic.co/logstash/logstash:${ELASTIC_STACK_VERSION:-9.4.2}
     restart: unless-stopped
     environment:
       LS_JAVA_OPTS: -Xms384m -Xmx384m
       XPACK_MONITORING_ENABLED: "false"
+      ELASTIC_LOGSTASH_USERNAME: ${ELASTIC_LOGSTASH_USERNAME:-logstash_internal}
+      ELASTIC_LOGSTASH_PASSWORD: ${ELASTIC_LOGSTASH_PASSWORD:?Définir ELASTIC_LOGSTASH_PASSWORD}
     mem_limit: ${LOGSTASH_MEMORY:-768m}
     volumes:
       - ${AUTOSTACK_APISIX_DIR:-..}/APISIX_demo_v3.18.0/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      elastic-setup:
+        condition: service_completed_successfully
     networks:
       - demo-observability
 
@@ -230,14 +256,19 @@ services:
     restart: unless-stopped
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-      XPACK_SECURITY_ENABLED: "false"
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: ${ELASTIC_KIBANA_SYSTEM_PASSWORD:?Définir ELASTIC_KIBANA_SYSTEM_PASSWORD}
+      XPACK_SECURITY_ENABLED: "true"
+      XPACK_SECURITY_ENCRYPTIONKEY: ${KIBANA_SECURITY_ENCRYPTION_KEY:?Définir KIBANA_SECURITY_ENCRYPTION_KEY}
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${KIBANA_SAVED_OBJECTS_ENCRYPTION_KEY:?Définir KIBANA_SAVED_OBJECTS_ENCRYPTION_KEY}
+      XPACK_REPORTING_ENCRYPTIONKEY: ${KIBANA_REPORTING_ENCRYPTION_KEY:?Définir KIBANA_REPORTING_ENCRYPTION_KEY}
       TELEMETRY_ENABLED: "false"
     mem_limit: ${KIBANA_MEMORY:-1024m}
     ports:
       - "${KIBANA_BIND_ADDRESS:-127.0.0.1}:${KIBANA_PORT:-5601}:5601/tcp"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      elastic-setup:
+        condition: service_completed_successfully
     networks:
       - demo-management
       - demo-observability
@@ -308,6 +339,8 @@ services:
       APISIX_PUBLIC_URL: ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}
       APISIX_OIDC_SESSION_SECRET: ${APISIX_OIDC_SESSION_SECRET:?Définir APISIX_OIDC_SESSION_SECRET}
       KIBANA_URL: http://kibana:5601
+      KIBANA_USERNAME: ${ELASTIC_ADMIN_USERNAME:-admin}
+      KIBANA_PASSWORD: ${ELASTIC_ADMIN_PASSWORD:?Définir ELASTIC_ADMIN_PASSWORD}
       LOGSTASH_URL: http://logstash:8080
     volumes:
       - ${AUTOSTACK_APISIX_DIR:-..}/scripts/bootstrap.py:/demo/bootstrap.py:ro
@@ -324,8 +357,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
+      elastic-setup:
+        condition: service_completed_successfully
       logstash:
         condition: service_started
       kibana:

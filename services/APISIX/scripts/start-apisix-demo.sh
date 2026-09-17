@@ -22,7 +22,9 @@ readonly GENERATED_DIR="${RUNTIME_DIR}/generated"
 readonly COMPOSE_PROJECT="autostack-apisix-demo"
 readonly TLS_HELPER="${SCRIPT_DIR}/configure-docker-insecure-registries.sh"
 readonly DOCKER_DAEMON_CONFIG="${AUTOSTACK_DOCKER_CONFIG_FILE:-/etc/docker/daemon.json}"
-readonly DEFAULT_APISIX_ADMIN_KEY="42424242424242424242424242424242"
+readonly DEFAULT_ADMIN_USERNAME="admin"
+readonly DEFAULT_ADMIN_PASSWORD="42424242424242424242424242424242"
+readonly DEFAULT_APISIX_ADMIN_KEY="${DEFAULT_ADMIN_PASSWORD}"
 
 # Le parcours est autonome par défaut. --interactive restaure les validations humaines.
 ASSUME_YES=1
@@ -54,6 +56,7 @@ done
 TLS_EXCEPTIONS_ACTIVE=0
 TEMPORARY_TLS_REGISTRIES=()
 PULL_LOG=""
+PREVIOUS_KEYCLOAK_ADMIN_PASSWORD=""
 
 # Arrête immédiatement le scénario avec un message homogène et exploitable.
 fail() {
@@ -286,7 +289,24 @@ path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 }
 
-# Crée le fichier privé, impose la clé Admin de démo et génère les autres secrets.
+# Lit une variable précise sans charger tout le fichier .env dans le shell courant.
+read_env_value() {
+  local key="$1"
+  python3 - "$ENV_FILE" "$key" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+key = sys.argv[2]
+for line in path.read_text(encoding="utf-8").splitlines():
+    if line.startswith(f"{key}="):
+        print(line.split("=", 1)[1])
+        raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+# Crée le fichier privé, impose les accès administrateur de démo et génère les secrets techniques.
 initialize_environment() {
   if [[ ! -f "$ENV_FILE" ]]; then
     install -m 600 "${DEMO_DIR}/.env.example" "$ENV_FILE"
@@ -295,27 +315,121 @@ initialize_environment() {
     chmod 600 "$ENV_FILE"
   fi
 
+  PREVIOUS_KEYCLOAK_ADMIN_PASSWORD="$(read_env_value KEYCLOAK_ADMIN_PASSWORD || true)"
   replace_env_value APISIX_ADMIN_KEY "$DEFAULT_APISIX_ADMIN_KEY"
-  printf 'Clé Admin APISIX de démonstration configurée.\n'
+  replace_env_value KEYCLOAK_ADMIN_USERNAME "$DEFAULT_ADMIN_USERNAME"
+  replace_env_value KEYCLOAK_ADMIN_PASSWORD "$DEFAULT_ADMIN_PASSWORD"
+  replace_env_value ELASTIC_BOOTSTRAP_PASSWORD "$DEFAULT_ADMIN_PASSWORD"
+  replace_env_value ELASTIC_ADMIN_USERNAME "$DEFAULT_ADMIN_USERNAME"
+  replace_env_value ELASTIC_ADMIN_PASSWORD "$DEFAULT_ADMIN_PASSWORD"
+  printf 'Accès administrateur commun APISIX, Keycloak et Kibana configuré.\n'
 
   local key
   for key in \
     DEMO_PARTNER_API_KEY \
     DEMO_INTERNAL_API_KEY \
     DEMO_PARTNER_BACKEND_API_KEY \
-    KEYCLOAK_ADMIN_PASSWORD \
     KEYCLOAK_DB_PASSWORD \
     KEYCLOAK_APISIX_CLIENT_SECRET \
     KEYCLOAK_PARTNER_CLIENT_SECRET \
     KEYCLOAK_DEMO_USER_PASSWORD \
-    APISIX_OIDC_SESSION_SECRET; do
+    APISIX_OIDC_SESSION_SECRET \
+    ELASTIC_KIBANA_SYSTEM_PASSWORD \
+    ELASTIC_LOGSTASH_PASSWORD \
+    KIBANA_SECURITY_ENCRYPTION_KEY \
+    KIBANA_SAVED_OBJECTS_ENCRYPTION_KEY \
+    KIBANA_REPORTING_ENCRYPTION_KEY; do
     if ! grep -Eq "^${key}=" "$ENV_FILE" || grep -Eq "^${key}=CHANGE_ME" "$ENV_FILE"; then
       replace_env_value "$key" "$(openssl rand -hex 32)"
       printf 'Secret local généré : %s\n' "$key"
     fi
   done
+  replace_env_value ELASTIC_LOGSTASH_USERNAME "logstash_internal"
   replace_env_value DEMO_HOST_UID "$(id -u)"
   replace_env_value DEMO_HOST_GID "$(id -g)"
+}
+
+# Rend le mot de passe intégré Elastic déterministe, y compris avec un ancien volume non sécurisé.
+prepare_elasticsearch_credentials() {
+  printf "Préparation de l'authentification Elasticsearch...\n"
+  compose up -d elasticsearch
+
+  local attempt
+  local elasticsearch_port
+  local http_status
+  elasticsearch_port="$(read_env_value ELASTICSEARCH_PORT || printf '9200')"
+  for attempt in {1..90}; do
+    http_status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+      "http://127.0.0.1:${elasticsearch_port}/" || true)"
+    [[ "$http_status" == "200" || "$http_status" == "401" ]] && break
+    (( attempt == 1 || attempt % 10 == 0 )) && \
+      printf "Attente d'Elasticsearch (%s/90)...\n" "$attempt"
+    sleep 2
+  done
+  [[ "$http_status" == "200" || "$http_status" == "401" ]] || \
+    fail "Elasticsearch n'est pas devenu joignable"
+
+  if curl --fail --silent --output /dev/null \
+      --user "elastic:${DEFAULT_ADMIN_PASSWORD}" \
+      "http://127.0.0.1:${elasticsearch_port}/_security/_authenticate"; then
+    printf 'Mot de passe Elasticsearch déjà conforme.\n'
+    return 0
+  fi
+
+  printf 'Migration du mot de passe Elasticsearch existant...\n'
+  printf '%s\n%s\n' "$DEFAULT_ADMIN_PASSWORD" "$DEFAULT_ADMIN_PASSWORD" | \
+    compose exec -T elasticsearch \
+      /usr/share/elasticsearch/bin/elasticsearch-reset-password \
+      --username elastic --interactive --url http://127.0.0.1:9200 >/dev/null
+  curl --fail --silent --output /dev/null \
+    --user "elastic:${DEFAULT_ADMIN_PASSWORD}" \
+    "http://127.0.0.1:${elasticsearch_port}/_security/_authenticate" || \
+    fail "le nouveau mot de passe Elasticsearch n'a pas pu être validé"
+  printf 'Mot de passe Elasticsearch réconcilié.\n'
+}
+
+# Aligne le compte master Keycloak sans effacer le realm ni la base PostgreSQL existante.
+reconcile_keycloak_admin() {
+  local login_script
+  # L'expansion est volontairement déléguée au conteneur.
+  # shellcheck disable=SC2016
+  login_script='config="/tmp/autostack-kcadm-$$.config"; trap '\''rm -f -- "$config"'\'' EXIT; /opt/keycloak/bin/kcadm.sh config credentials --config "$config" --server http://127.0.0.1:8080 --realm master --user "$AUTOSTACK_ADMIN_USERNAME" --password "$AUTOSTACK_ADMIN_PASSWORD" >/dev/null'
+
+  if compose exec -T \
+      -e AUTOSTACK_ADMIN_USERNAME="$DEFAULT_ADMIN_USERNAME" \
+      -e AUTOSTACK_ADMIN_PASSWORD="$DEFAULT_ADMIN_PASSWORD" \
+      keycloak bash -ec "$login_script" 2>/dev/null; then
+    printf 'Compte administrateur Keycloak déjà conforme.\n'
+    return 0
+  fi
+
+  [[ -n "$PREVIOUS_KEYCLOAK_ADMIN_PASSWORD" \
+      && "$PREVIOUS_KEYCLOAK_ADMIN_PASSWORD" != CHANGE_ME* ]] || \
+    fail "impossible d'authentifier ou de migrer le compte administrateur Keycloak"
+
+  printf 'Migration du mot de passe administrateur Keycloak existant...\n'
+  # Le script et ses variables s'exécutent dans Keycloak.
+  # shellcheck disable=SC2016
+  compose exec -T \
+    -e AUTOSTACK_ADMIN_USERNAME="$DEFAULT_ADMIN_USERNAME" \
+    -e AUTOSTACK_OLD_ADMIN_PASSWORD="$PREVIOUS_KEYCLOAK_ADMIN_PASSWORD" \
+    -e AUTOSTACK_NEW_ADMIN_PASSWORD="$DEFAULT_ADMIN_PASSWORD" \
+    keycloak bash -ec '
+      config="/tmp/autostack-kcadm-$$.config"
+      trap '\''rm -f -- "$config"'\'' EXIT
+      /opt/keycloak/bin/kcadm.sh config credentials \
+        --config "$config" \
+        --server http://127.0.0.1:8080 \
+        --realm master \
+        --user "$AUTOSTACK_ADMIN_USERNAME" \
+        --password "$AUTOSTACK_OLD_ADMIN_PASSWORD" >/dev/null
+      /opt/keycloak/bin/kcadm.sh set-password \
+        --config "$config" \
+        --realm master \
+        --username "$AUTOSTACK_ADMIN_USERNAME" \
+        --new-password "$AUTOSTACK_NEW_ADMIN_PASSWORD" >/dev/null
+    ' || fail "migration du compte administrateur Keycloak impossible"
+  printf 'Mot de passe administrateur Keycloak réconcilié.\n'
 }
 
 # Réutilise les certificats valides ; sinon recrée une PKI locale cohérente pour le mTLS.
@@ -436,7 +550,9 @@ PY
   if confirm "Télécharger/construire les images et démarrer la démonstration ?"; then
     pull_images_with_tls_fallback
     compose build
+    prepare_elasticsearch_credentials
     compose up -d --wait --wait-timeout 360
+    reconcile_keycloak_admin
     # Recharge aussi les changements d'un config.yaml monté dans un conteneur existant.
     compose restart apisix
     compose --profile tools run --rm demo-configurator
@@ -452,7 +568,8 @@ PY
   printf '%s\n' \
     '' \
     'Installation, configuration et validation terminées.' \
-    "Clé Admin APISIX : ${DEFAULT_APISIX_ADMIN_KEY}" \
+    "Utilisateur administrateur Keycloak/Kibana : ${DEFAULT_ADMIN_USERNAME}" \
+    "Mot de passe administrateur et clé APISIX : ${DEFAULT_ADMIN_PASSWORD}" \
     'Pour rejouer les scénarios : ./scripts/run-apisix-demo-scenarios.sh' \
     "Console Keycloak : ${KEYCLOAK_PUBLIC_URL:-http://127.0.0.1:8080}/admin/" \
     "Parcours BFF : ${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}/bff/orders"

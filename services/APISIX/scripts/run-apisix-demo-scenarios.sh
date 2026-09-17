@@ -77,6 +77,7 @@ count=0
 # Le pipeline de journalisation est asynchrone : cette boucle borne son éventuelle cohérence.
 for _ in 1 2 3 4 5 6 7 8 9 10; do
   count="$(curl --fail --silent --show-error \
+    --user "${ELASTIC_ADMIN_USERNAME}:${ELASTIC_ADMIN_PASSWORD}" \
     "${ELASTICSEARCH_URL}/apisix-demo-*/_count" 2>/dev/null | jq -r '.count // 0' || printf '0')"
   [[ "$count" =~ ^[0-9]+$ ]] || count=0
   (( count >= 3 )) && break
@@ -89,4 +90,5 @@ printf '\nTous les scénarios sont validés.\n'
 printf 'Dashboard APISIX : http://127.0.0.1:%s/ui/\n' "${APISIX_ADMIN_PORT:-9180}"
 printf 'Kibana : http://127.0.0.1:%s/app/discover\n' "${KIBANA_PORT:-5601}"
 printf 'Keycloak : http://127.0.0.1:%s/admin/\n' "${KEYCLOAK_PORT:-8080}"
+printf 'Identifiant administrateur Keycloak/Kibana : %s\n' "${ELASTIC_ADMIN_USERNAME:-admin}"
 printf 'BFF OIDC : %s/bff/orders\n' "${APISIX_PUBLIC_URL:-http://127.0.0.1:9080}"

@@ -2,7 +2,7 @@
 id: autostack.apisix
 kind: guide
 status: active
-last_reviewed: 2026-09-16
+last_reviewed: 2026-09-17
 sensitivity: public
 sources: ["https://apisix.apache.org/docs/apisix/installation-guide/", "https://apisix.apache.org/docs/apisix/dashboard/", "https://apisix.apache.org/docs/apisix/plugins/openid-connect/", "https://www.keycloak.org/server/containers", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://docs.docker.com/reference/cli/dockerd/#insecure-registries"]
 ---
@@ -32,7 +32,7 @@ Le parcours complet se lance sans paramétrage applicatif manuel :
 ./scripts/start-apisix-demo.sh
 ```
 
-Le lanceur configure la clé Admin de démonstration `42424242424242424242424242424242`, prépare Keycloak et Kibana, puis exécute les six scénarios fonctionnels avant de rendre la main.
+Le lanceur prépare Keycloak et Kibana avec le compte `admin` et le mot de passe de laboratoire `42424242424242424242424242424242`. Le Dashboard APISIX ne gère pas de nom d'utilisateur : il utilise cette même valeur comme clé Admin. Le script exécute ensuite les six scénarios fonctionnels avant de rendre la main.
 
 ## Démarrage autonome recommandé
 
