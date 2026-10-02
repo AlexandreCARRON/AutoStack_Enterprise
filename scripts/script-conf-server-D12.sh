@@ -169,6 +169,8 @@ ok "Fail2Ban installé."
 # Configuration de Fail2Ban via le fichier préparamétré disponible dans le repo
 echo "######### Configuration de Fail2Ban..."
 sudo cp ./host/fail2ban/jail.local /etc/fail2ban/jail.local
+sudo install -d -m 0755 /etc/fail2ban/jail.d
+printf '[sshd]\nenabled = true\nport = ssh,%s\n' "$NEW_PORT_SSH" | sudo tee /etc/fail2ban/jail.d/sshd.local > /dev/null
 sudo service fail2ban restart
 
 echo "######### Les paramètre spécifiques de surveillance de protocols ont été implémentés et le service a été redémarré."
@@ -233,7 +235,8 @@ echo "############################################# Les données Node Exporter s
 # ********************************************************************* Changements MDP et DROITS *************************************
 # Changer le mot de passe pour l'utilisateur root
 echo "######### Changement du mots de passe pour l'utilisateurs root"
-echo "root:$NEW_PASSWORD" | sudo chpasswd
+ROOT_PASSWORD="${NEW_PASSWORD_ROOT:-$NEW_PASSWORD}"
+echo "root:$ROOT_PASSWORD" | sudo chpasswd
 ok "Mot de passe root modifié."
 
 # Créer le nouvel utilisateur et affecter mot de passe
@@ -290,10 +293,16 @@ else
      echo "Port $NEW_PORT_SSH" | sudo tee -a "$SSHD_CONFIG"
 fi
 
-# Redémarrer le service SSH pour appliquer les modifications
-sudo systemctl restart sshd
-
-ok "Port SSH changé vers $NEW_PORT_SSH et service redémarré. Ajoute '-p $NEW_PORT_SSH' à la prochaine connexion."
+# Valider la syntaxe avant d'appliquer les modifications
+if sudo sshd -t; then
+    sudo systemctl restart sshd
+    ok "Port SSH changé vers $NEW_PORT_SSH et service redémarré. Ajoute '-p $NEW_PORT_SSH' à la prochaine connexion."
+else
+    fail "Erreur de configuration SSH détectée par sshd -t. Restauration de la sauvegarde."
+    sudo cp "${SSHD_CONFIG}.bak" "$SSHD_CONFIG"
+    sudo systemctl restart sshd
+    exit 1
+fi
 
 # ********************************************************************* Avertissement et redémarrage du système *************************************
 

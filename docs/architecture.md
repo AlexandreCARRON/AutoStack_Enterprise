@@ -44,6 +44,8 @@ Lors d'un assemblage, le générateur ajoute `AUTOSTACK_<SERVICE>_DIR=./services
 
 Les anciens fichiers non épinglés sont conservés dans des variantes suffixées par `legacy-unpinned`. Elles servent de référence et ne doivent pas être considérées comme reproductibles : leur tag `latest` peut avoir changé depuis leur création.
 
+Le préfixe `Z_` (ex. `Z_Nextcloud`, `Z_Borgbackup-cron`, `Z_Stirling-PDF`) désigne conventionnellement des services archivés ou conservés à titre d'historique dans le catalogue.
+
 ## Générateur
 
 Le script `scripts/generate-docker-compose.sh` reçoit une ou plusieurs sélections :

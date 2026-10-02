@@ -28,6 +28,7 @@ Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.
 | Grafana OSS | `Grafana-OSS_v13.1.0` | `Grafana-OSS_legacy-unpinned` | [Grafana 13.1.0](https://github.com/grafana/grafana/releases/tag/v13.1.0) |
 | Nextcloud classique | `Nextcloud_v34.0.1` | `Nextcloud_v33.0.6` | [Image officielle Nextcloud](https://hub.docker.com/_/nextcloud/) |
 | Stirling PDF | `Stirling-PDF_v2.14.0` | `Stirling-PDF_legacy-unpinned` | [Image officielle Stirling PDF](https://hub.docker.com/r/stirlingtools/stirling-pdf/tags) |
+| Dockhand | `Dockhand_v1.0.50` | `Dockhand_legacy-unpinned` | [Dockhand GitHub](https://github.com/Finsys/dockhand) |
 
 ## Exceptions aux versions exactes
 

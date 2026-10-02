@@ -161,30 +161,39 @@ def validate_documents(root: Path = REPO_ROOT) -> list[str]:
 
 def validate_default_versions(root: Path = REPO_ROOT) -> list[str]:
     errors: list[str] = []
-    service_roots: set[Path] = set()
-    for compose in (root / "services").glob("*/*/docker-compose.yml"):
-        service_roots.add(compose.parent.parent)
-    for compose in (root / "services").glob("*/*/dockercompose.yml"):
-        service_roots.add(compose.parent.parent)
+    services_dir = root / "services"
+    if not services_dir.is_dir():
+        return errors
+
+    for compose in services_dir.glob("*/docker-compose.yml"):
+        errors.append(
+            f"{compose.relative_to(root)}: fichier Compose hors d'un sous-dossier de version"
+        )
+    for compose in services_dir.glob("*/dockercompose.yml"):
+        errors.append(
+            f"{compose.relative_to(root)}: fichier Compose hors d'un sous-dossier de version"
+        )
+
+    service_roots = {path for path in services_dir.iterdir() if path.is_dir()}
 
     for service_root in sorted(service_roots):
         marker = service_root / "default-version"
         if not marker.is_file():
-            errors.append(f"{service_root}: default-version absent")
+            errors.append(f"{service_root.relative_to(root)}: default-version absent")
             continue
         variant = marker.read_text(encoding="utf-8").strip()
         if not variant or "/" in variant or variant in {".", ".."}:
-            errors.append(f"{marker}: nom de variante invalide")
+            errors.append(f"{marker.relative_to(root)}: nom de variante invalide")
             continue
         target = service_root / variant
         if not target.is_dir():
-            errors.append(f"{marker}: variante introuvable: {variant}")
+            errors.append(f"{marker.relative_to(root)}: variante introuvable: {variant}")
             continue
         compose_files = [target / "docker-compose.yml", target / "dockercompose.yml"]
         if not any(path.is_file() for path in compose_files):
-            errors.append(f"{target}: fichier Compose absent")
+            errors.append(f"{target.relative_to(root)}: fichier Compose absent")
         if not (target / ".env.example").is_file():
-            errors.append(f"{target}: .env.example absent")
+            errors.append(f"{target.relative_to(root)}: .env.example absent")
     return errors
 
 

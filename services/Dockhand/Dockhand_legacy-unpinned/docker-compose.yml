@@ -1,10 +1,10 @@
 services:
   dockhand:
-    image: fnsys/dockhand:latest
+    image: ${DOCKHAND_IMAGE:-fnsys/dockhand:latest}
     container_name: dockhand
     restart: unless-stopped
     ports:
-      - 3000:3000
+      - "${DOCKHAND_BIND_ADDRESS:-127.0.0.1}:${PORT_MNGT_DOCKHAND:-3000}:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - dockhand_data:/app/data

@@ -19,5 +19,6 @@ Cette documentation décrit le catalogue de services versionnés et le générat
 - [Contribution](../CONTRIBUTING.md) : flux de travail et contrôles locaux.
 - [Sécurité](../SECURITY.md) : signalement privé et responsabilités de déploiement.
 - [Catalogue des versions](../VERSIONS.md) : variantes disponibles, valeurs par défaut et références officielles.
+- [Backlog des services](backlog.md) : briques candidates et critères d'intégration future.
 
 Les exemples supposent que les commandes sont exécutées depuis la racine du dépôt.

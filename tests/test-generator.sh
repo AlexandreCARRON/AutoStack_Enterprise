@@ -100,4 +100,11 @@ if grep -q '^  apisix-dashboard:' "${tmp_dir}/apisix.yml"; then
   exit 1
 fi
 
+COMPOSE_OUTPUT="${tmp_dir}/dockhand.yml" ENV_OUTPUT="${tmp_dir}/dockhand.env" \
+  "$GENERATOR" Dockhand >/dev/null
+grep -q '^  dockhand:' "${tmp_dir}/dockhand.yml"
+grep -q '^DOCKHAND_IMAGE=fnsys/dockhand:v1.0.50$' "${tmp_dir}/dockhand.env"
+grep -q '^PORT_MNGT_DOCKHAND=22093$' "${tmp_dir}/dockhand.env"
+
 echo "Tests du générateur : OK"
+
