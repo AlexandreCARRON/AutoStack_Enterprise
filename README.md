@@ -2,7 +2,7 @@
 id: autostack.readme
 kind: guide
 status: active
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-20
 sensitivity: public
 sources: ["docs/README.md", "VERSIONS.md"]
 ---
@@ -103,6 +103,7 @@ Remplacez d'abord les valeurs `CHANGE_ME`. Les scripts, tests, configurations et
 - [Politique de sécurité](SECURITY.md)
 - [Catalogue des versions](VERSIONS.md)
 - [Guide Apache APISIX](services/APISIX/README.md)
+- [Pilote manuel Hermes](services/hermes/README.md)
 
 Le générateur refuse d'écraser un fichier `docker-compose.yml` existant. Pour le régénérer volontairement :
 

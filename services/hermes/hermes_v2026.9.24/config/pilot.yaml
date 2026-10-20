@@ -1,0 +1,22 @@
+# No provider credential or model selected by this pilot.
+agent:
+  max_turns: 20
+platform_toolsets:
+  cli: [file, todo, memory, terminal]
+  telegram: []
+  discord: []
+  slack: []
+  whatsapp: []
+memory:
+  memory_enabled: true
+  write_approval: true
+  nudge_interval: 0
+skills:
+  write_approval: true
+  creation_nudge_interval: 0
+approvals:
+  mode: manual
+security:
+  allow_lazy_installs: false
+kanban:
+  review_dispatch: false
