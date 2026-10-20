@@ -2,14 +2,14 @@
 id: autostack.versions
 kind: fact
 status: active
-last_reviewed: 2026-09-08
+last_reviewed: 2026-10-20
 sensitivity: public
-sources: ["https://hub.docker.com/", "https://github.com/nextcloud/all-in-one/blob/main/compose.yaml", "https://apisix.apache.org/downloads/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml"]
+sources: ["https://hub.docker.com/", "https://github.com/nextcloud/all-in-one/blob/main/compose.yaml", "https://apisix.apache.org/downloads/", "https://github.com/apache/apisix-docker/blob/master/example/docker-compose.yml", "https://github.com/NousResearch/hermes-agent/releases/tag/v2026.9.24"]
 ---
 
 # Catalogue des versions
 
-Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.18.0 a été vérifié le 8 septembre 2026. Le nom court d'un service sélectionne la variante indiquée par son fichier `default-version`. Une variante historique doit être appelée avec son chemin complet, par exemple `Odoo/Odoo_v17`.
+Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.18.0 a été vérifié le 8 septembre 2026 et Hermes v2026.9.24 le 20 octobre 2026. Le nom court d'un service sélectionne la variante indiquée par son fichier `default-version`. Une variante historique doit être appelée avec son chemin complet, par exemple `Odoo/Odoo_v17`.
 
 | Service | Variante par défaut | Variantes conservées | Référence officielle |
 | --- | --- | --- | --- |
@@ -26,12 +26,15 @@ Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.
 | Web-Check | `Web-Check_latest` | `Web-Check_legacy-unpinned` | [Web-Check](https://github.com/Lissy93/web-check) |
 | BorgBackup Cron | `Borgbackup-cron_latest` | `Borgbackup-cron_v1.0.0` | [Image BorgBackup Cron](https://hub.docker.com/r/ovski/borgbackup-cron) |
 | Grafana OSS | `Grafana-OSS_v13.1.0` | `Grafana-OSS_legacy-unpinned` | [Grafana 13.1.0](https://github.com/grafana/grafana/releases/tag/v13.1.0) |
+| Hermes Agent | `hermes_v2026.9.24` | — | [Hermes Agent v2026.9.24](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.9.24) |
 | Nextcloud classique | `Nextcloud_v34.0.1` | `Nextcloud_v33.0.6` | [Image officielle Nextcloud](https://hub.docker.com/_/nextcloud/) |
 | Stirling PDF | `Stirling-PDF_v2.14.0` | `Stirling-PDF_legacy-unpinned` | [Image officielle Stirling PDF](https://hub.docker.com/r/stirlingtools/stirling-pdf/tags) |
 
 ## Exceptions aux versions exactes
 
 Nextcloud AIO orchestre et met à jour ses propres images ; son projet officiel demande d'utiliser le canal `ghcr.io/nextcloud-releases/all-in-one:latest`. Web-Check et BorgBackup Cron ne publient pas actuellement de tag sémantique récent. Leurs variantes récentes conservent donc `latest`, tandis que leurs anciennes configurations restent archivées séparément.
+
+Hermes est un pilote manuel : le nom court sélectionne sa variante, mais son profil Compose `manual` empêche tout démarrage implicite. Aucun fournisseur, compte ou secret n'est préconfiguré dans Git.
 
 ## Règles de migration
 
