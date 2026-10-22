@@ -1,0 +1,15 @@
+services:
+  dockhand:
+    image: ${DOCKHAND_IMAGE:?Définir DOCKHAND_IMAGE}
+    container_name: dockhand
+    restart: unless-stopped
+    ports:
+      - "${DOCKHAND_BIND_ADDRESS:-127.0.0.1}:${PORT_MNGT_DOCKHAND}:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dockhand_data:/app/data
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  dockhand_data:

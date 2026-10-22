@@ -1,6 +1,22 @@
-+.*
-+docs
-+go
-+test
-+README.md
-+schema.png
+# Fichiers de configuration locale et secrets
+.env
+**/.env
+*.pem
+*.key
+secret_*.txt
+
+# Documentation et tests hors conteneurs
+.git/
+.github/
+docs/
+tests/
+measurement/
+decisions/
+*.md
+
+# Déchets système et IDE
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+*.pyc

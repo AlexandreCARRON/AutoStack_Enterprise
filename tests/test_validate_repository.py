@@ -34,6 +34,18 @@ class RepositoryValidatorTests(unittest.TestCase):
 
         self.assertTrue(any("variante introuvable" in error for error in errors))
 
+    def test_unversioned_service_compose_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            service = root / "services" / "Example"
+            service.mkdir(parents=True)
+            (service / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
+            (service / "default-version").write_text("Example_v1\n", encoding="utf-8")
+
+            errors = VALIDATOR.validate_default_versions(root)
+
+        self.assertTrue(any("hors d'un sous-dossier de version" in error for error in errors))
+
     def test_required_decision_source_is_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "decision.md"

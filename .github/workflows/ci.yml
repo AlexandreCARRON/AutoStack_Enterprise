@@ -23,8 +23,15 @@ jobs:
       - name: Tester les validateurs génériques Python
         run: python3 -m unittest discover -s tests -v
 
-      - name: Tester le service APISIX
-        run: python3 -m unittest discover -s services/APISIX/tests -v
+      - name: Tester les suites de tests des services
+        shell: bash
+        run: |
+          for test_dir in services/*/tests; do
+            if [ -d "$test_dir" ]; then
+              echo "==> Exécution des tests : $test_dir"
+              python3 -m unittest discover -s "$test_dir" -v
+            fi
+          done
 
       - name: Vérifier la syntaxe Bash
         shell: bash

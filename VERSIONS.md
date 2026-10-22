@@ -29,6 +29,7 @@ Les versions préexistantes ont été vérifiées le 17 juillet 2026 ; APISIX 3.
 | Hermes Agent | `hermes_v2026.9.24` | — | [Hermes Agent v2026.9.24](https://github.com/NousResearch/hermes-agent/releases/tag/v2026.9.24) |
 | Nextcloud classique | `Nextcloud_v34.0.1` | `Nextcloud_v33.0.6` | [Image officielle Nextcloud](https://hub.docker.com/_/nextcloud/) |
 | Stirling PDF | `Stirling-PDF_v2.14.0` | `Stirling-PDF_legacy-unpinned` | [Image officielle Stirling PDF](https://hub.docker.com/r/stirlingtools/stirling-pdf/tags) |
+| Dockhand | `Dockhand_v1.0.50` | `Dockhand_legacy-unpinned` | [Dockhand GitHub](https://github.com/Finsys/dockhand) |
 
 ## Exceptions aux versions exactes
 
